@@ -84,3 +84,31 @@ func TestParserMultiline(t *testing.T) {
 		t.Errorf("Got %v commands: %+v; Expected only 2 of them", len(result), result)
 	}
 }
+
+func TestParserErrors(t *testing.T) {
+	testCase := []struct {
+		desc string
+		line string
+	}{
+		{"No necessary argument", "push"},
+		{"No second arg", "pop local"},
+		{"Exceeded args", "pop local 2 3"},
+		{"Wrong push literal", "pushd local 2"},
+		{"Wrong push segment", "push lcl 2"},
+		{"Wrong arithmetic arg", "add local"},
+	}
+
+	for _, tc := range testCase {
+		t.Run(tc.desc, func(t *testing.T) {
+			parser := newParserString(tc.line)
+			cmd, err := parser.ParseNext()
+			if err == nil {
+				t.Errorf("Error is not arisen. Cmd %+v", *cmd)
+				return
+			}
+			if errors.Is(err, io.EOF) {
+				t.Errorf("Unexpected EOF error")
+			}
+		})
+	}
+}

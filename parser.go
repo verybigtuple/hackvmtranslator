@@ -16,8 +16,6 @@ const (
 	cArithmetic CommandType = iota
 	cPush
 	cPop
-
-	commentPrefix string = "//"
 )
 
 // Command is a struct for a parsed VM cmd
@@ -27,15 +25,32 @@ type Command struct {
 	Arg2    int
 }
 
-func convertTwoArgs(words []string, ct CommandType) (*Command, error) {
+func convertTwoArgs(words []string, ct CommandType, sValid func(string) bool) (*Command, error) {
 	if len(words) < 3 {
-		return nil, errors.New("Not enough args for a pop command")
+		return nil, errors.New("Not enough args for a command")
 	}
+
+	if !sValid(words[1]) {
+		return nil, fmt.Errorf("Segment argument '%s' is invalid for a command %s", words[1], words[0])
+	}
+
 	i, err := strconv.Atoi(words[2])
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Invalid offset argument %s for a command %s: %w", words[2], words[0], err)
 	}
+
+	if len(words) > 3 && !isComment(words[3]) {
+		return nil, errors.New("Unexpected inline comment literal")
+	}
+
 	return &Command{CmdType: ct, Arg1: words[1], Arg2: i}, nil
+}
+
+func convertArithmetic(words []string) (*Command, error) {
+	if len(words) > 1 && !isComment(words[1]) {
+		return nil, errors.New("Unexpected inline comment literal")
+	}
+	return &Command{CmdType: cArithmetic, Arg1: words[0]}, nil
 }
 
 // Parser struct for parsing VM cmds line by line
@@ -59,13 +74,14 @@ func (p Parser) ParseNext() (*Command, error) {
 		return nil, fmt.Errorf("No words in the line '%s'", line)
 	}
 
+	firstWord := words[0]
 	switch {
-	case ArithmeticKey[words[0]]:
-		return &Command{CmdType: cArithmetic, Arg1: words[0]}, nil
-	case words[0] == PopKey:
-		return convertTwoArgs(words, cPop)
-	case words[0] == PushKey:
-		return convertTwoArgs(words, cPush)
+	case isArithmetic(firstWord):
+		return convertArithmetic(words)
+	case isPop(firstWord):
+		return convertTwoArgs(words, cPop, isValidPopSegment)
+	case isPush(firstWord):
+		return convertTwoArgs(words, cPush, isValidPushSegment)
 	}
 
 	return nil, fmt.Errorf("Cmd cannot be parsed from line '%s'", line)

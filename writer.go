@@ -96,7 +96,7 @@ func (ah *asmHelper) SegmentToDReg(segm string, offset int) string {
 		ah.builder.WriteString("D=A\n")
 	}
 
-	ah.builder.WriteString("@" + segmAInstr[segm] + "\n") // like @ARG
+	ah.builder.WriteString(segmAInstr[segm] + "\n") // like @ARG
 	switch offset {
 	case 0:
 		ah.builder.WriteString("A=M\n")

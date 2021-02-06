@@ -64,3 +64,50 @@ func TestWriterPushStatic(t *testing.T) {
 	}
 	runTestLine(t, testLine, want)
 }
+
+func TestWriterPushLocalZero(t *testing.T) {
+	testLine := Command{CmdType: cPush, Arg1: "local", Arg2: 0}
+	want := []string{
+		"// push local 0",
+		"@LCL",
+		"A=M",
+		"D=M",
+		"@SP",
+		"M=M+1",
+		"A=M-1",
+		"M=D",
+	}
+	runTestLine(t, testLine, want)
+}
+
+func TestWriterPushLocalOne(t *testing.T) {
+	testLine := Command{CmdType: cPush, Arg1: "local", Arg2: 1}
+	want := []string{
+		"// push local 1",
+		"@LCL",
+		"A=M+1",
+		"D=M",
+		"@SP",
+		"M=M+1",
+		"A=M-1",
+		"M=D",
+	}
+	runTestLine(t, testLine, want)
+}
+
+func TestWriterPushLocalMore(t *testing.T) {
+	testLine := Command{CmdType: cPush, Arg1: "local", Arg2: 5}
+	want := []string{
+		"// push local 5",
+		"@5",
+		"D=A",
+		"@LCL",
+		"A=D+M", //Calc lcl + 5
+		"D=M",
+		"@SP",
+		"M=M+1",
+		"A=M-1",
+		"M=D",
+	}
+	runTestLine(t, testLine, want)
+}

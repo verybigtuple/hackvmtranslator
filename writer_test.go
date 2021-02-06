@@ -40,6 +40,7 @@ func runTestLine(t *testing.T, tc Command, want []string) {
 func TestWriterPushConst(t *testing.T) {
 	testLine := Command{CmdType: cPush, Arg1: "constant", Arg2: 100}
 	want := []string{
+		"// push constant 100",
 		"@100",
 		"D=A",
 		"@SP",
@@ -53,6 +54,7 @@ func TestWriterPushConst(t *testing.T) {
 func TestWriterPushStatic(t *testing.T) {
 	testLine := Command{CmdType: cPush, Arg1: "static", Arg2: 5}
 	want := []string{
+		"// push static 5",
 		"@test.5",
 		"D=M",
 		"@SP",

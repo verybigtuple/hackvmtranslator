@@ -39,6 +39,7 @@ func (cw *CodeWriter) WriteCommand(cmd Command) (err error) {
 }
 
 func (cw *CodeWriter) writePush(cmd Command) (err error) {
+	comment := fmt.Sprintf("%s push %s %d\n", commentPrefix, cmd.Arg1, cmd.Arg2)
 	var code string
 
 	switch {
@@ -52,7 +53,7 @@ func (cw *CodeWriter) writePush(cmd Command) (err error) {
 		code = cw.asm.SegmentToDReg(cmd.Arg1, cmd.Arg2)
 	}
 
-	_, err = cw.writer.WriteString(code + pushDReg)
+	_, err = cw.writer.WriteString(comment + code + pushDReg)
 	return
 }
 

@@ -33,21 +33,21 @@ func (cw *CodeWriter) writePush(cmd Command) error {
 
 	switch {
 	case isConstantSegment(cmd.Arg1): // push constant 2
-		cw.asm.AddConstToDReg(cmd.Arg2)
+		cw.asm.ConstToD(cmd.Arg2)
 	case isStaticSegment(cmd.Arg1): // push  static 2
-		cw.asm.AddStaticToDReg(cw.stPrefix, cmd.Arg2)
+		cw.asm.StaticToD(cw.stPrefix, cmd.Arg2)
 	case isTempSegment(cmd.Arg1): // push temp 2
-		cw.asm.AddTempToDReg(cmd.Arg2)
+		cw.asm.TempToD(cmd.Arg2)
 	default: // push local 2
 		if cmd.Arg2 <= 3 {
-			cw.asm.AddCalcSegmentAddr(cmd.Arg1, cmd.Arg2)
+			cw.asm.SegmAddr(cmd.Arg1, cmd.Arg2)
 		} else {
-			cw.asm.AddCalcSegmentAddrWithD(cmd.Arg1, cmd.Arg2, "A")
+			cw.asm.SegmAddrCalcWithD(cmd.Arg1, cmd.Arg2, "A")
 		}
-		cw.asm.AddDeqM()
+		cw.asm.FromMemToD()
 	}
 
-	cw.asm.AddPushFromDReg()
+	cw.asm.FromDtoStack()
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err
 }
@@ -57,22 +57,22 @@ func (cw *CodeWriter) writePop(cmd Command) error {
 
 	switch {
 	case isStaticSegment(cmd.Arg1):
-		cw.asm.AddPopToDReg()
-		cw.asm.AddStaticFromDReg(cw.stPrefix, cmd.Arg2)
+		cw.asm.FromStackToD()
+		cw.asm.StaticFromD(cw.stPrefix, cmd.Arg2)
 	case isTempSegment(cmd.Arg1):
-		cw.asm.AddPopToDReg()
-		cw.asm.AddTempFromDReg(cmd.Arg2)
+		cw.asm.FromStackToD()
+		cw.asm.TempFromD(cmd.Arg2)
 	default:
 		if cmd.Arg2 <= 7 {
-			cw.asm.AddPopToDReg()
-			cw.asm.AddCalcSegmentAddr(cmd.Arg1, cmd.Arg2)
+			cw.asm.FromStackToD()
+			cw.asm.SegmAddr(cmd.Arg1, cmd.Arg2)
 		} else {
-			cw.asm.AddCalcSegmentAddrWithD(cmd.Arg1, cmd.Arg2, "D")
-			cw.asm.AddToRreg("D")
-			cw.asm.AddPopToDReg()
-			cw.asm.AddFromRreg("A")
+			cw.asm.SegmAddrCalcWithD(cmd.Arg1, cmd.Arg2, "D")
+			cw.asm.ToR("D")
+			cw.asm.FromStackToD()
+			cw.asm.FromR("A")
 		}
-		cw.asm.AddMeqD()
+		cw.asm.FromDtoMem()
 	}
 
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())

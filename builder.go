@@ -43,65 +43,65 @@ func (ah *asmBuilder) AddComment(comment string) {
 	}
 }
 
-// AddPushFromDReg adds asm code which move SP pointer and push the value of the D-register
+// FromDtoStack adds asm code which move SP pointer and push the value of the D-register
 // to the stack
-func (ah *asmBuilder) AddPushFromDReg() {
+func (ah *asmBuilder) FromDtoStack() {
 	ah.builder.WriteString("@SP\n")
 	ah.builder.WriteString("M=M+1\n")
 	ah.builder.WriteString("A=M-1\n")
 	ah.builder.WriteString("M=D\n")
 }
 
-// AddPopToDReg adds asm code which move SP pointer and pop value from the stack to the D-Register
-func (ah *asmBuilder) AddPopToDReg() {
+// FromStackToD adds asm code which move SP pointer and pop value from the stack to the D-Register
+func (ah *asmBuilder) FromStackToD() {
 	ah.builder.WriteString("@SP\n")
 	ah.builder.WriteString("AM=M-1\n")
 	ah.builder.WriteString("D=M\n")
 }
 
-// AddDeqM adds D=M instruction
-func (ah *asmBuilder) AddDeqM() {
+// FromMemToD adds D=M instruction
+func (ah *asmBuilder) FromMemToD() {
 	ah.builder.WriteString("D=M\n")
 }
 
-// AddMeqD adds M=D instruction
-func (ah *asmBuilder) AddMeqD() {
+// FromDtoMem adds M=D instruction
+func (ah *asmBuilder) FromDtoMem() {
 	ah.builder.WriteString("M=D\n")
 }
 
 // AddRregFromDReg - asm code for adding a value of the D-Register to R-register
-func (ah *asmBuilder) AddToRreg(from string) {
+func (ah *asmBuilder) ToR(from string) {
 	ah.builder.WriteString(freeReg + "\n")
 	ah.builder.WriteString("M=" + from + "\n")
 }
 
-func (ah *asmBuilder) AddFromRreg(src string) {
+func (ah *asmBuilder) FromR(src string) {
 	ah.builder.WriteString(freeReg + "\n")
 	ah.builder.WriteString(src + "=M\n")
 }
 
-// AddConstToDReg add asm code to add a integer value to the D-Register:
+// ConstToD add asm code to add a integer value to the D-Register:
 // example
 // @101
 // D=A
-func (ah *asmBuilder) AddConstToDReg(c int) {
+func (ah *asmBuilder) ConstToD(c int) {
 	ah.builder.WriteString("@" + strconv.Itoa(c) + "\n")
 	ah.builder.WriteString("D=A\n")
 }
 
-// AddCalcSegmentAddrWithD adds asm code for calc addr+offset
+// SegmAddrCalcWithD adds asm code for calc addr+offset
 // by using D register and get addr value to A or D register
 //  resReg is A or D (where the calculated addres should be stored)
-func (ah *asmBuilder) AddCalcSegmentAddrWithD(segm string, offset int, resReg string) {
+func (ah *asmBuilder) SegmAddrCalcWithD(segm string, offset int, resReg string) {
 	ah.builder.WriteString("@" + strconv.Itoa(offset) + "\n") // like @101
 	ah.builder.WriteString("D=A\n")
 	ah.builder.WriteString(segmAInstr[segm] + "\n") // like @ARG
 	ah.builder.WriteString(resReg + "=D+M\n")
 }
 
-// AddCalcSegmentAddr adds asm code that calcs addr+offset w/o using D register
+// SegmAddr adds asm code that calcs addr+offset w/o using D register
 // the result is stored in A register. For big offsets may be ineffective.
-func (ah *asmBuilder) AddCalcSegmentAddr(segm string, offset int) {
+func (ah *asmBuilder) SegmAddr(segm string, offset int) {
 	ah.builder.WriteString(segmAInstr[segm] + "\n")
 	if offset == 0 {
 		ah.builder.WriteString("A=M\n")
@@ -113,27 +113,27 @@ func (ah *asmBuilder) AddCalcSegmentAddr(segm string, offset int) {
 	}
 }
 
-// AddStaticToDReg adds asm code for storing value of a static var to the D register
-func (ah *asmBuilder) AddStaticToDReg(prefix string, id int) {
+// StaticToD adds asm code for storing value of a static var to the D register
+func (ah *asmBuilder) StaticToD(prefix string, id int) {
 	ah.builder.WriteString(fmt.Sprintf("@%s.%d\n", prefix, id)) //like @file.1
 	ah.builder.WriteString("D=M\n")
 }
 
-// AddStaticFromDReg adds asm code for moving value of the D-Register to a static var
-func (ah *asmBuilder) AddStaticFromDReg(prefix string, id int) {
+// StaticFromD adds asm code for moving value of the D-Register to a static var
+func (ah *asmBuilder) StaticFromD(prefix string, id int) {
 	ah.builder.WriteString(fmt.Sprintf("@%s.%d\n", prefix, id)) //like @file.1
 	ah.builder.WriteString("M=D\n")
 }
 
-// AddTempToDReg adds asm code for moving value of a temp var to the D register
-func (ah *asmBuilder) AddTempToDReg(offset int) {
+// TempToD adds asm code for moving value of a temp var to the D register
+func (ah *asmBuilder) TempToD(offset int) {
 	addr := tempBaseAddr + offset
 	ah.builder.WriteString("@" + strconv.Itoa(addr) + "\n")
 	ah.builder.WriteString("D=M\n")
 }
 
 // AddStaticFromDReg adds asm code for moving value of the D-Register to a temp var
-func (ah *asmBuilder) AddTempFromDReg(offset int) {
+func (ah *asmBuilder) TempFromD(offset int) {
 	addr := tempBaseAddr + offset
 	ah.builder.WriteString("@" + strconv.Itoa(addr) + "\n")
 	ah.builder.WriteString("M=D\n")

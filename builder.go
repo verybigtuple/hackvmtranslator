@@ -7,7 +7,10 @@ import (
 	"strings"
 )
 
-const tempBaseAddr = 5 // Base address for temp vars
+const (
+	tempBaseAddr = 5 // Base address for temp vars
+	freeReg      = "@R13"
+)
 
 // Assign segments to assembler A-Instructions
 var segmAInstr = map[string]string{
@@ -64,6 +67,17 @@ func (ah *asmBuilder) AddDeqM() {
 // AddMeqD adds M=D instruction
 func (ah *asmBuilder) AddMeqD() {
 	ah.builder.WriteString("M=D\n")
+}
+
+// AddRregFromDReg - asm code for adding a value of the D-Register to R-register
+func (ah *asmBuilder) AddToRreg(from string) {
+	ah.builder.WriteString(freeReg + "\n")
+	ah.builder.WriteString("M=" + from + "\n")
+}
+
+func (ah *asmBuilder) AddFromRreg(src string) {
+	ah.builder.WriteString(freeReg + "\n")
+	ah.builder.WriteString(src + "=M\n")
 }
 
 // AddConstToDReg add asm code to add a integer value to the D-Register:

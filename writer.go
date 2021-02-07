@@ -22,6 +22,8 @@ func (cw *CodeWriter) WriteCommand(cmd Command) (err error) {
 	switch cmd.CmdType {
 	case cPush:
 		err = cw.writePush(cmd)
+	case cPop:
+		err = cw.writePop(cmd)
 	}
 	return
 }
@@ -39,7 +41,6 @@ func (cw *CodeWriter) writePush(cmd Command) error {
 	default: // push local 2
 		if cmd.Arg2 <= 3 {
 			cw.asm.AddCalcSegmentAddr(cmd.Arg1, cmd.Arg2)
-
 		} else {
 			cw.asm.AddCalcSegmentAddrWithD(cmd.Arg1, cmd.Arg2, "A")
 		}
@@ -51,7 +52,29 @@ func (cw *CodeWriter) writePush(cmd Command) error {
 	return err
 }
 
-func (cw *CodeWriter) writePop(cmd Command) (err error) {
-	//_, err = cw.writer.WriteString(comment + popDReg + code)
-	return nil
+func (cw *CodeWriter) writePop(cmd Command) error {
+	cw.asm.AddComment(fmt.Sprintf("pop %s %d\n", cmd.Arg1, cmd.Arg2))
+
+	switch {
+	case isStaticSegment(cmd.Arg1):
+		cw.asm.AddPopToDReg()
+		cw.asm.AddStaticFromDReg(cw.stPrefix, cmd.Arg2)
+	case isTempSegment(cmd.Arg1):
+		cw.asm.AddPopToDReg()
+		cw.asm.AddTempFromDReg(cmd.Arg2)
+	default:
+		if cmd.Arg2 <= 7 {
+			cw.asm.AddPopToDReg()
+			cw.asm.AddCalcSegmentAddr(cmd.Arg1, cmd.Arg2)
+		} else {
+			cw.asm.AddCalcSegmentAddrWithD(cmd.Arg1, cmd.Arg2, "D")
+			cw.asm.AddToRreg("D")
+			cw.asm.AddPopToDReg()
+			cw.asm.AddFromRreg("A")
+		}
+		cw.asm.AddMeqD()
+	}
+
+	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
+	return err
 }

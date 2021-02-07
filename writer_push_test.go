@@ -123,6 +123,23 @@ func TestWriterPushLocalOne(t *testing.T) {
 	runTestLine(t, testLine, want)
 }
 
+func TestWriterPushLocalTwo(t *testing.T) {
+	testLine := Command{CmdType: cPush, Arg1: "local", Arg2: 3}
+	want := []string{
+		"// push local 3",
+		"@LCL",
+		"A=M+1",
+		"A=A+1",
+		"A=A+1", // Optimization for push local 3 - 9 cmd
+		"D=M",
+		"@SP",
+		"M=M+1",
+		"A=M-1",
+		"M=D",
+	}
+	runTestLine(t, testLine, want)
+}
+
 func TestWriterPushLocalMore(t *testing.T) {
 	testLine := Command{CmdType: cPush, Arg1: "local", Arg2: 5}
 	want := []string{
@@ -130,7 +147,7 @@ func TestWriterPushLocalMore(t *testing.T) {
 		"@5",
 		"D=A",
 		"@LCL",
-		"A=D+M", //Calc lcl + 5
+		"A=D+M", // Calc lcl + 5
 		"D=M",
 		"@SP",
 		"M=M+1",

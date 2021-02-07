@@ -91,17 +91,22 @@ func (ah *asmHelper) ConstToDReg(c int) string {
 func (ah *asmHelper) SegmentToDReg(segm string, offset int) string {
 	ah.builder.Reset()
 
-	if offset > 1 {
+	if offset > 3 {
 		ah.builder.WriteString("@" + strconv.Itoa(offset) + "\n") // like @101
 		ah.builder.WriteString("D=A\n")
 	}
 
 	ah.builder.WriteString(segmAInstr[segm] + "\n") // like @ARG
-	switch offset {
-	case 0:
+	switch {
+	case offset == 0:
 		ah.builder.WriteString("A=M\n")
-	case 1:
+	case offset == 1:
 		ah.builder.WriteString("A=M+1\n")
+	case offset >= 2 && offset <= 3:
+		ah.builder.WriteString("A=M+1\n")
+		for i := 0; i < offset-1; i++ {
+			ah.builder.WriteString("A=A+1\n")
+		}
 	default:
 		ah.builder.WriteString("A=D+M\n")
 	}

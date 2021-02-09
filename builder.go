@@ -59,6 +59,36 @@ func (ah *asmBuilder) FromStackToD() {
 	ah.builder.WriteString("D=M\n")
 }
 
+func (ah *asmBuilder) SetTopStack(calc string) {
+	ah.builder.WriteString("@SP\n")
+	ah.builder.WriteString("A=M-1\n")
+	ah.builder.WriteString("M=" + calc + "\n")
+}
+
+func (ah *asmBuilder) DecAddr() {
+	ah.builder.WriteString("A=A-1\n")
+}
+
+func (ah *asmBuilder) ArbitraryCmd(cmd string) {
+	ah.builder.WriteString(cmd + "\n")
+}
+
+func (ah *asmBuilder) CondFalseDefault() {
+	ah.builder.WriteString("A=A-1\n")
+	ah.builder.WriteString("D=M-D\n")
+	ah.builder.WriteString("M=0\n")
+}
+
+func (ah *asmBuilder) CondJump(cond string, c int, jmp string) {
+	up := strings.ToUpper(cond)
+	ah.builder.WriteString(fmt.Sprintf("@%s_END_%d\n", up, c))
+	ah.builder.WriteString("D;" + jmp + "\n")
+	ah.builder.WriteString("@SP\n")
+	ah.builder.WriteString("A=M-1\n")
+	ah.builder.WriteString("M=-1\n")
+	ah.builder.WriteString(fmt.Sprintf("(%s_END_%d)\n", up, c))
+}
+
 // FromMemToD adds D=M instruction
 func (ah *asmBuilder) FromMemToD() {
 	ah.builder.WriteString("D=M\n")

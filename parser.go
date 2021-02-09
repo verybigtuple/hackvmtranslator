@@ -13,7 +13,9 @@ type CommandType int
 
 const (
 	// Command Types
-	cArithmetic CommandType = iota
+	cArithmeticBinary CommandType = iota
+	cArithmeticUnary
+	cArithmeticCond
 	cPush
 	cPop
 )
@@ -46,11 +48,11 @@ func convertTwoArgs(words []string, ct CommandType, sValid func(string) bool) (*
 	return &Command{CmdType: ct, Arg1: words[1], Arg2: i}, nil
 }
 
-func convertArithmetic(words []string) (*Command, error) {
+func convertArithmetic(ct CommandType, words []string) (*Command, error) {
 	if len(words) > 1 && !isComment(words[1]) {
 		return nil, errors.New("Unexpected inline comment literal")
 	}
-	return &Command{CmdType: cArithmetic, Arg1: words[0]}, nil
+	return &Command{CmdType: ct, Arg1: words[0]}, nil
 }
 
 // Parser struct for parsing VM cmds line by line
@@ -76,8 +78,12 @@ func (p Parser) ParseNext() (*Command, error) {
 
 	firstWord := words[0]
 	switch {
-	case isArithmetic(firstWord):
-		return convertArithmetic(words)
+	case isArithmeticBinary(firstWord):
+		return convertArithmetic(cArithmeticBinary, words)
+	case isArithmeticUnary(firstWord):
+		return convertArithmetic(cArithmeticUnary, words)
+	case isArithmeticCond(firstWord):
+		return convertArithmetic(cArithmeticCond, words)
 	case isPop(firstWord):
 		return convertTwoArgs(words, cPop, isValidPopSegment)
 	case isPush(firstWord):

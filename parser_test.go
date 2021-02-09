@@ -28,7 +28,7 @@ func TestParserRegular(t *testing.T) {
 		},
 		{
 			line: "add",
-			want: Command{cArithmetic, "add", 0},
+			want: Command{cArithmeticBinary, "add", 0},
 		},
 		{
 			line: "push local 100 // Comment for the command",
@@ -36,7 +36,7 @@ func TestParserRegular(t *testing.T) {
 		},
 		{
 			line: "eq",
-			want: Command{cArithmetic, "eq", 0},
+			want: Command{cArithmeticCond, "eq", 0},
 		},
 	}
 

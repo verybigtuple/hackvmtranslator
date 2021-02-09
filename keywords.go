@@ -14,16 +14,22 @@ const (
 	commentPrefix = "//"
 )
 
-var arithmeticKeys = map[string]bool{
+var arithmeticBinaryKeys = map[string]bool{
 	"add": true,
 	"sub": true,
-	"neg": true,
-	"eq":  true,
-	"gt":  true,
-	"lt":  true,
 	"and": true,
 	"or":  true,
+}
+
+var arithmeticUnaryKeys = map[string]bool{
+	"neg": true,
 	"not": true,
+}
+
+var arithmeticCondKeys = map[string]bool{
+	"eq": true,
+	"gt": true,
+	"lt": true,
 }
 
 var segmentsKeys = map[string]bool{
@@ -46,7 +52,19 @@ func isPop(s string) bool {
 }
 
 func isArithmetic(s string) bool {
-	return arithmeticKeys[s]
+	return arithmeticBinaryKeys[s] || arithmeticUnaryKeys[s] || arithmeticCondKeys[s]
+}
+
+func isArithmeticBinary(s string) bool {
+	return arithmeticBinaryKeys[s]
+}
+
+func isArithmeticUnary(s string) bool {
+	return arithmeticUnaryKeys[s]
+}
+
+func isArithmeticCond(s string) bool {
+	return arithmeticCondKeys[s]
 }
 
 func isConstantSegment(s string) bool {

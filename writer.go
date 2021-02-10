@@ -39,7 +39,7 @@ func (cw *CodeWriter) WriteCommand(cmd Command) (err error) {
 }
 
 func (cw *CodeWriter) writePush(cmd Command) error {
-	cw.asm.AddComment(fmt.Sprintf("push %s %d\n", cmd.Arg1, cmd.Arg2))
+	cw.asm.AddComment(fmt.Sprintf("push %s %d", cmd.Arg1, cmd.Arg2))
 
 	switch {
 	case isConstantSegment(cmd.Arg1): // push constant 2
@@ -63,7 +63,7 @@ func (cw *CodeWriter) writePush(cmd Command) error {
 }
 
 func (cw *CodeWriter) writePop(cmd Command) error {
-	cw.asm.AddComment(fmt.Sprintf("pop %s %d\n", cmd.Arg1, cmd.Arg2))
+	cw.asm.AddComment(fmt.Sprintf("pop %s %d", cmd.Arg1, cmd.Arg2))
 
 	switch {
 	case isStaticSegment(cmd.Arg1):
@@ -128,10 +128,10 @@ func (cw *CodeWriter) writeArithmCond(cmd Command) error {
 		cw.asm.CondJump(cmd.Arg1, cw.eqCount, "JNE")
 		cw.eqCount++
 	case "gt":
-		cw.asm.CondJump(cmd.Arg1, cw.gtCount, "JLT")
+		cw.asm.CondJump(cmd.Arg1, cw.gtCount, "JLE")
 		cw.gtCount++
 	case "lt":
-		cw.asm.CondJump(cmd.Arg1, cw.gtCount, "JGT")
+		cw.asm.CondJump(cmd.Arg1, cw.ltCount, "JGE")
 		cw.ltCount++
 	}
 

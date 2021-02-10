@@ -77,7 +77,7 @@ func TestWriterGt(t *testing.T) {
 		"M=0",   // False by default
 
 		"@GT_END_0",
-		"D;JLT", // If D=x-y > 0 then jump, else set true (-1)
+		"D;JLE", // If D=x-y <= 0 then jump to end and leave M=False, else set true (-1)
 
 		"@SP",
 		"A=M-1",
@@ -100,7 +100,7 @@ func TestWriterLt(t *testing.T) {
 		"M=0",   // False by default
 
 		"@LT_END_0",
-		"D;JGT", // If D=x-y > 0 then jump, esle set true (-1)
+		"D;JGE", // If D=x-y >= 0 then jump and leave M=False, esle set true (-1)
 
 		"@SP",
 		"A=M-1",

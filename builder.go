@@ -20,6 +20,11 @@ var segmAInstr = map[string]string{
 	"that":     "@THAT",
 }
 
+var pointerOffsets = map[int]string{
+	0: "@THIS",
+	1: "@THAT",
+}
+
 type asmBuilder struct {
 	builder *bytes.Buffer // byte buffer does not reallocates while reset (strings.Builder does)
 }
@@ -166,5 +171,15 @@ func (ah *asmBuilder) TempToD(offset int) {
 func (ah *asmBuilder) TempFromD(offset int) {
 	addr := tempBaseAddr + offset
 	ah.builder.WriteString("@" + strconv.Itoa(addr) + "\n")
+	ah.builder.WriteString("M=D\n")
+}
+
+func (ah *asmBuilder) PointerToD(offset int) {
+	ah.builder.WriteString(pointerOffsets[offset] + "\n")
+	ah.builder.WriteString("D=M\n")
+}
+
+func (ah *asmBuilder) PointerFromD(offset int) {
+	ah.builder.WriteString(pointerOffsets[offset] + "\n")
 	ah.builder.WriteString("M=D\n")
 }

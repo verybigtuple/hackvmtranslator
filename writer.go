@@ -48,6 +48,8 @@ func (cw *CodeWriter) writePush(cmd Command) error {
 		cw.asm.StaticToD(cw.stPrefix, cmd.Arg2)
 	case isTempSegment(cmd.Arg1): // push temp 2
 		cw.asm.TempToD(cmd.Arg2)
+	case isPointerSegment(cmd.Arg1):
+		cw.asm.PointerToD(cmd.Arg2)
 	default: // push local 2
 		if cmd.Arg2 <= 3 {
 			cw.asm.SegmAddr(cmd.Arg1, cmd.Arg2)
@@ -72,6 +74,9 @@ func (cw *CodeWriter) writePop(cmd Command) error {
 	case isTempSegment(cmd.Arg1):
 		cw.asm.FromStackToD()
 		cw.asm.TempFromD(cmd.Arg2)
+	case isPointerSegment(cmd.Arg1):
+		cw.asm.FromStackToD()
+		cw.asm.PointerFromD(cmd.Arg2)
 	default:
 		if cmd.Arg2 <= 7 {
 			cw.asm.FromStackToD()

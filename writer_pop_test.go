@@ -116,3 +116,29 @@ func TestWriterPopLocalMore(t *testing.T) {
 	}
 	runTestLine(t, testLine, want)
 }
+
+func TestWriterPopPointerZero(t *testing.T) {
+	testLine := Command{CmdType: cPop, Arg1: "pointer", Arg2: 0}
+	want := []string{
+		"// pop pointer 0",
+		"@SP",
+		"AM=M-1",
+		"D=M",
+		"@THIS",
+		"M=D",
+	}
+	runTestLine(t, testLine, want)
+}
+
+func TestWriterPopPointerOne(t *testing.T) {
+	testLine := Command{CmdType: cPop, Arg1: "pointer", Arg2: 1}
+	want := []string{
+		"// pop pointer 1",
+		"@SP",
+		"AM=M-1",
+		"D=M",
+		"@THAT",
+		"M=D",
+	}
+	runTestLine(t, testLine, want)
+}

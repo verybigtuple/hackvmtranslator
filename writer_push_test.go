@@ -156,3 +156,31 @@ func TestWriterPushLocalMore(t *testing.T) {
 	}
 	runTestLine(t, testLine, want)
 }
+
+func TestWriterPushPointerZero(t *testing.T) {
+	testLine := Command{CmdType: cPush, Arg1: "pointer", Arg2: 0}
+	want := []string{
+		"// push pointer 0",
+		"@THIS",
+		"D=M",
+		"@SP",
+		"M=M+1",
+		"A=M-1",
+		"M=D",
+	}
+	runTestLine(t, testLine, want)
+}
+
+func TestWriterPushPointerOne(t *testing.T) {
+	testLine := Command{CmdType: cPush, Arg1: "pointer", Arg2: 1}
+	want := []string{
+		"// push pointer 1",
+		"@THAT",
+		"D=M",
+		"@SP",
+		"M=M+1",
+		"A=M-1",
+		"M=D",
+	}
+	runTestLine(t, testLine, want)
+}

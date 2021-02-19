@@ -6,6 +6,10 @@ const (
 	pushKey = "push"
 	popKey  = "pop"
 
+	labelKey  = "label"
+	gotoKey   = "goto"
+	ifgotoKey = "if-goto"
+
 	constantKey = "constant"
 	staticKey   = "static"
 	pointerKey  = "pointer"
@@ -65,6 +69,18 @@ func isArithmeticUnary(s string) bool {
 
 func isArithmeticCond(s string) bool {
 	return arithmeticCondKeys[s]
+}
+
+func isGoto(s string) bool {
+	return s == gotoKey
+}
+
+func isLabel(s string) bool {
+	return s == labelKey
+}
+
+func isIfGoto(s string) bool {
+	return s == ifgotoKey
 }
 
 func isConstantSegment(s string) bool {

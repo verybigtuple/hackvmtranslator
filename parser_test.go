@@ -38,6 +38,18 @@ func TestParserRegular(t *testing.T) {
 			line: "eq",
 			want: Command{cmdArithmeticCond, "eq", 0},
 		},
+		{
+			line: "goto testLabel",
+			want: Command{cmdGoto, "testLabel", 0},
+		},
+		{
+			line: "label testLabel",
+			want: Command{cmdLabel, "testLabel", 0},
+		},
+		{
+			line: "if-goto testLabel",
+			want: Command{cmdIfGoto, "testLabel", 0},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -96,6 +108,8 @@ func TestParserErrors(t *testing.T) {
 		{"Wrong push literal", "pushd local 2"},
 		{"Wrong push segment", "push lcl 2"},
 		{"Wrong arithmetic arg", "add local"},
+		{"Too few goto arg", "label"},
+		{"Too many goto arg", "goto label1 label2"},
 	}
 
 	for _, tc := range testCase {

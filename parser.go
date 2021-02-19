@@ -18,7 +18,9 @@ const (
 	cmdArithmeticCond
 	cmdPush
 	cmdPop
+	cmdLabel
 	cmdGoto
+	cmdIfGoto
 )
 
 // Command is a struct for a parsed VM cmd
@@ -56,6 +58,16 @@ func convertArithmetic(ct CommandType, words []string) (*Command, error) {
 	return &Command{CmdType: ct, Arg1: words[0]}, nil
 }
 
+func convertOneArg(ct CommandType, words []string) (*Command, error) {
+	if len(words) < 2 {
+		return nil, errors.New("At least one argument expected")
+	}
+	if len(words) > 2 && !isComment(words[2]) {
+		return nil, errors.New("Expected only one argument for goto comands")
+	}
+	return &Command{CmdType: ct, Arg1: words[1]}, nil
+}
+
 // Parser struct for parsing VM cmds line by line
 type Parser struct {
 	reader *bufio.Reader
@@ -89,6 +101,12 @@ func (p Parser) ParseNext() (*Command, error) {
 		return convertTwoArgs(words, cmdPop, isValidPopSegment)
 	case isPush(firstWord):
 		return convertTwoArgs(words, cmdPush, isValidPushSegment)
+	case isGoto(firstWord):
+		return convertOneArg(cmdGoto, words)
+	case isLabel(firstWord):
+		return convertOneArg(cmdLabel, words)
+	case isIfGoto(firstWord):
+		return convertOneArg(cmdIfGoto, words)
 	}
 
 	return nil, fmt.Errorf("Cmd cannot be parsed from line '%s'", line)

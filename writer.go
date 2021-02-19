@@ -24,15 +24,15 @@ func NewCodeWriter(stPr string, w *bufio.Writer) *CodeWriter {
 // WriteCommand writes a command to a writer passed to NewCodeWriter
 func (cw *CodeWriter) WriteCommand(cmd Command) (err error) {
 	switch cmd.CmdType {
-	case cPush:
+	case cmdPush:
 		err = cw.writePush(cmd)
-	case cPop:
+	case cmdPop:
 		err = cw.writePop(cmd)
-	case cArithmeticBinary:
+	case cmdArithmeticBinary:
 		err = cw.writeAritmBinary(cmd)
-	case cArithmeticUnary:
+	case cmdArithmeticUnary:
 		err = cw.writeArithmUnary(cmd)
-	case cArithmeticCond:
+	case cmdArithmeticCond:
 		err = cw.writeArithmCond(cmd)
 	}
 	return

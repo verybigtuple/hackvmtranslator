@@ -13,11 +13,11 @@ type CommandType int
 
 const (
 	// Command Types
-	cArithmeticBinary CommandType = iota
-	cArithmeticUnary
-	cArithmeticCond
-	cPush
-	cPop
+	cmdArithmeticBinary CommandType = iota
+	cmdArithmeticUnary
+	cmdArithmeticCond
+	cmdPush
+	cmdPop
 )
 
 // Command is a struct for a parsed VM cmd
@@ -79,15 +79,15 @@ func (p Parser) ParseNext() (*Command, error) {
 	firstWord := words[0]
 	switch {
 	case isArithmeticBinary(firstWord):
-		return convertArithmetic(cArithmeticBinary, words)
+		return convertArithmetic(cmdArithmeticBinary, words)
 	case isArithmeticUnary(firstWord):
-		return convertArithmetic(cArithmeticUnary, words)
+		return convertArithmetic(cmdArithmeticUnary, words)
 	case isArithmeticCond(firstWord):
-		return convertArithmetic(cArithmeticCond, words)
+		return convertArithmetic(cmdArithmeticCond, words)
 	case isPop(firstWord):
-		return convertTwoArgs(words, cPop, isValidPopSegment)
+		return convertTwoArgs(words, cmdPop, isValidPopSegment)
 	case isPush(firstWord):
-		return convertTwoArgs(words, cPush, isValidPushSegment)
+		return convertTwoArgs(words, cmdPush, isValidPushSegment)
 	}
 
 	return nil, fmt.Errorf("Cmd cannot be parsed from line '%s'", line)

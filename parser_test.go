@@ -20,23 +20,23 @@ func TestParserRegular(t *testing.T) {
 	}{
 		{
 			line: "push constant 17",
-			want: Command{cPush, "constant", 17},
+			want: Command{cmdPush, "constant", 17},
 		},
 		{
 			line: "pop local 1",
-			want: Command{cPop, "local", 1},
+			want: Command{cmdPop, "local", 1},
 		},
 		{
 			line: "add",
-			want: Command{cArithmeticBinary, "add", 0},
+			want: Command{cmdArithmeticBinary, "add", 0},
 		},
 		{
 			line: "push local 100 // Comment for the command",
-			want: Command{cPush, "local", 100},
+			want: Command{cmdPush, "local", 100},
 		},
 		{
 			line: "eq",
-			want: Command{cArithmeticCond, "eq", 0},
+			want: Command{cmdArithmeticCond, "eq", 0},
 		},
 	}
 

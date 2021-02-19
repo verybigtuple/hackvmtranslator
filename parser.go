@@ -18,6 +18,7 @@ const (
 	cmdArithmeticCond
 	cmdPush
 	cmdPop
+	cmdGoto
 )
 
 // Command is a struct for a parsed VM cmd

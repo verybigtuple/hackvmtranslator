@@ -3,9 +3,18 @@ package main
 import "strings"
 
 const (
-	pushKey = "push"
-	popKey  = "pop"
-
+	// VM commands
+	pushKey   = "push"
+	popKey    = "pop"
+	addKey    = "add"
+	subKey    = "sub"
+	andKey    = "and"
+	orKey     = "or"
+	negKey    = "neg"
+	notKey    = "not"
+	eqKey     = "eq"
+	gtKey     = "gt"
+	ltKey     = "lt"
 	labelKey  = "label"
 	gotoKey   = "goto"
 	ifgotoKey = "if-goto"
@@ -19,21 +28,21 @@ const (
 )
 
 var arithmeticBinaryKeys = map[string]bool{
-	"add": true,
-	"sub": true,
-	"and": true,
-	"or":  true,
+	addKey: true,
+	subKey: true,
+	andKey: true,
+	orKey:  true,
 }
 
 var arithmeticUnaryKeys = map[string]bool{
-	"neg": true,
-	"not": true,
+	negKey: true,
+	notKey: true,
 }
 
 var arithmeticCondKeys = map[string]bool{
-	"eq": true,
-	"gt": true,
-	"lt": true,
+	eqKey: true,
+	gtKey: true,
+	ltKey: true,
 }
 
 var segmentsKeys = map[string]bool{

@@ -19,6 +19,11 @@ const (
 	gotoKey   = "goto"
 	ifgotoKey = "if-goto"
 
+	// Segments
+	localKey    = "local"
+	argumentKey = "argument"
+	thisKey     = "this"
+	thatKey     = "that"
 	constantKey = "constant"
 	staticKey   = "static"
 	pointerKey  = "pointer"
@@ -46,10 +51,10 @@ var arithmeticCondKeys = map[string]bool{
 }
 
 var segmentsKeys = map[string]bool{
-	"local":     true,
-	"argument":  true,
-	"this":      true,
-	"that":      true,
+	localKey:    true,
+	argumentKey: true,
+	thisKey:     true,
+	thatKey:     true,
 	constantKey: true,
 	staticKey:   true,
 	pointerKey:  true,

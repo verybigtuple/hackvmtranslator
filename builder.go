@@ -183,3 +183,11 @@ func (ah *asmBuilder) PointerFromD(offset int) {
 	ah.builder.WriteString(pointerOffsets[offset] + "\n")
 	ah.builder.WriteString("M=D\n")
 }
+
+func (ah *asmBuilder) AtLabel(fnPrefix, label string) {
+	ah.builder.WriteString("@" + fnPrefix + "$" + label + "\n")
+}
+
+func (ah *asmBuilder) SetLabel(fnPrefix, label string) {
+	ah.builder.WriteString("(" + fnPrefix + "$" + label + ")\n")
+}

@@ -41,7 +41,7 @@ func parseCmdline() (inFilePath string, outFilePath string, err error) {
 
 func run(stPrefix string, inReader *bufio.Reader, outWriter *bufio.Writer) error {
 	parser := NewParser(inReader)
-	codeWr := NewCodeWriter(stPrefix, outWriter)
+	codeWr := NewCodeWriter(outWriter, stPrefix, "")
 	for {
 		cmd, err := parser.ParseNext()
 		if errors.Is(err, io.EOF) {

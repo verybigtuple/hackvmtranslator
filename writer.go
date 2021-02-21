@@ -11,14 +11,18 @@ type CodeWriter struct {
 	asm    *asmBuilder
 
 	stPrefix string
+	fnPrefix string
 	eqCount  int
 	gtCount  int
 	ltCount  int
 }
 
 // NewCodeWriter retuns a pointer to a new CodeWriter
-func NewCodeWriter(stPr string, w *bufio.Writer) *CodeWriter {
-	return &CodeWriter{stPrefix: stPr, writer: w, asm: newAsmBuilder()}
+func NewCodeWriter(w *bufio.Writer, stPrefix, fnPrefix string) *CodeWriter {
+	if fnPrefix == "" {
+		fnPrefix = "default"
+	}
+	return &CodeWriter{writer: w, asm: newAsmBuilder(), stPrefix: stPrefix, fnPrefix: fnPrefix}
 }
 
 // WriteCommand writes a command to a writer passed to NewCodeWriter
@@ -34,6 +38,12 @@ func (cw *CodeWriter) WriteCommand(cmd Command) (err error) {
 		err = cw.writeArithmUnary(cmd)
 	case cmdArithmeticCond:
 		err = cw.writeArithmCond(cmd)
+	case cmdGoto:
+		err = cw.writeGotoCmd(cmd)
+	case cmdLabel:
+		err = cw.writeLabelCmd(cmd)
+	case cmdIfGoto:
+		err = cw.writeIfGotoCmd(cmd)
 	}
 	return
 }
@@ -140,6 +150,30 @@ func (cw *CodeWriter) writeArithmCond(cmd Command) error {
 		cw.ltCount++
 	}
 
+	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
+	return err
+}
+
+func (cw *CodeWriter) writeGotoCmd(cmd Command) error {
+	cw.asm.AddComment("goto " + cmd.Arg1)
+	cw.asm.AtLabel(cw.fnPrefix, cmd.Arg1)
+	cw.asm.ArbitraryCmd("0;JMP")
+	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
+	return err
+}
+
+func (cw *CodeWriter) writeLabelCmd(cmd Command) error {
+	cw.asm.AddComment("label " + cmd.Arg1)
+	cw.asm.SetLabel(cw.fnPrefix, cmd.Arg1)
+	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
+	return err
+}
+
+func (cw *CodeWriter) writeIfGotoCmd(cmd Command) error {
+	cw.asm.AddComment("if-goto " + cmd.Arg1)
+	cw.asm.FromStackToD()
+	cw.asm.AtLabel(cw.fnPrefix, cmd.Arg1)
+	cw.asm.ArbitraryCmd("D;JNE")
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err
 }

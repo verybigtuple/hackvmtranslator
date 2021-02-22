@@ -23,49 +23,94 @@ const (
 	cmdIfGoto
 )
 
+var cmdTypes = map[string]CommandType{
+	pushKey:   cmdPush,
+	popKey:    cmdPop,
+	addKey:    cmdArithmeticBinary,
+	subKey:    cmdArithmeticBinary,
+	andKey:    cmdArithmeticBinary,
+	orKey:     cmdArithmeticBinary,
+	negKey:    cmdArithmeticUnary,
+	notKey:    cmdArithmeticUnary,
+	eqKey:     cmdArithmeticCond,
+	gtKey:     cmdArithmeticCond,
+	ltKey:     cmdArithmeticCond,
+	labelKey:  cmdLabel,
+	gotoKey:   cmdGoto,
+	ifgotoKey: cmdIfGoto,
+}
+
+var cmdConverters = map[CommandType]func(CommandType, []string) (*Command, error){
+	cmdPush:             convertPushPop,
+	cmdPop:              convertPushPop,
+	cmdArithmeticBinary: convertArithmetic,
+	cmdArithmeticUnary:  convertArithmetic,
+	cmdArithmeticCond:   convertArithmetic,
+	cmdLabel:            conevrtLabeled,
+	cmdGoto:             conevrtLabeled,
+	cmdIfGoto:           conevrtLabeled,
+}
+
+func checkNullArgs(words []string) (err error) {
+	if len(words) > 1 && !isComment(words[1]) {
+		err = errors.New("Too many arguments")
+	}
+	return
+}
+
+func checkOneArg(words []string) (string, error) {
+	if len(words) < 2 || (len(words) > 2 && !isComment(words[2])) {
+		return "", errors.New("One argument expected")
+	}
+	return words[1], nil
+}
+
+func checkTwoArgs(words []string) (string, int, error) {
+	if len(words) < 3 || (len(words) > 3 && !isComment(words[3])) {
+		return "", 0, errors.New("Three argument expected")
+	}
+	i, err := strconv.Atoi(words[2])
+	if err != nil {
+		return "", 0, fmt.Errorf("Second argument %s is not an integer number", words[2])
+	}
+	return words[1], i, nil
+}
+
+func convertPushPop(ct CommandType, words []string) (*Command, error) {
+	segment, offset, err := checkTwoArgs(words)
+	if err != nil {
+		return nil, err
+	}
+	if !(ct == cmdPush && isValidPushSegment(segment)) && !isValidPopSegment(segment) {
+		return nil, fmt.Errorf("Invalid segment %s for %s command", segment, words[0])
+	}
+	if offset < 0 {
+		return nil, fmt.Errorf("Offset cannot be negative")
+	}
+	return &Command{ct, segment, offset}, nil
+}
+
+func convertArithmetic(ct CommandType, words []string) (*Command, error) {
+	err := checkNullArgs(words)
+	if err != nil {
+		return nil, err
+	}
+	return &Command{CmdType: ct, Arg1: words[0]}, nil
+}
+
+func conevrtLabeled(ct CommandType, words []string) (*Command, error) {
+	label, err := checkOneArg(words)
+	if err != nil {
+		return nil, err
+	}
+	return &Command{CmdType: ct, Arg1: label}, nil
+}
+
 // Command is a struct for a parsed VM cmd
 type Command struct {
 	CmdType CommandType
 	Arg1    string
 	Arg2    int
-}
-
-func convertTwoArgs(words []string, ct CommandType, sValid func(string) bool) (*Command, error) {
-	if len(words) < 3 {
-		return nil, errors.New("Not enough args for a command")
-	}
-
-	if !sValid(words[1]) {
-		return nil, fmt.Errorf("Segment argument '%s' is invalid for a command %s", words[1], words[0])
-	}
-
-	i, err := strconv.Atoi(words[2])
-	if err != nil {
-		return nil, fmt.Errorf("Invalid offset argument %s for a command %s: %w", words[2], words[0], err)
-	}
-
-	if len(words) > 3 && !isComment(words[3]) {
-		return nil, errors.New("Unexpected inline comment literal")
-	}
-
-	return &Command{CmdType: ct, Arg1: words[1], Arg2: i}, nil
-}
-
-func convertArithmetic(ct CommandType, words []string) (*Command, error) {
-	if len(words) > 1 && !isComment(words[1]) {
-		return nil, errors.New("Unexpected inline comment literal")
-	}
-	return &Command{CmdType: ct, Arg1: words[0]}, nil
-}
-
-func convertOneArg(ct CommandType, words []string) (*Command, error) {
-	if len(words) < 2 {
-		return nil, errors.New("At least one argument expected")
-	}
-	if len(words) > 2 && !isComment(words[2]) {
-		return nil, errors.New("Expected only one argument for goto comands")
-	}
-	return &Command{CmdType: ct, Arg1: words[1]}, nil
 }
 
 // Parser struct for parsing VM cmds line by line
@@ -90,26 +135,17 @@ func (p Parser) ParseNext() (*Command, error) {
 	}
 
 	firstWord := words[0]
-	switch {
-	case isArithmeticBinary(firstWord):
-		return convertArithmetic(cmdArithmeticBinary, words)
-	case isArithmeticUnary(firstWord):
-		return convertArithmetic(cmdArithmeticUnary, words)
-	case isArithmeticCond(firstWord):
-		return convertArithmetic(cmdArithmeticCond, words)
-	case isPop(firstWord):
-		return convertTwoArgs(words, cmdPop, isValidPopSegment)
-	case isPush(firstWord):
-		return convertTwoArgs(words, cmdPush, isValidPushSegment)
-	case isGoto(firstWord):
-		return convertOneArg(cmdGoto, words)
-	case isLabel(firstWord):
-		return convertOneArg(cmdLabel, words)
-	case isIfGoto(firstWord):
-		return convertOneArg(cmdIfGoto, words)
+	cmdType, ok := cmdTypes[firstWord]
+	if !ok {
+		return nil, fmt.Errorf("Unknown command %s", firstWord)
 	}
 
-	return nil, fmt.Errorf("Cmd cannot be parsed from line '%s'", line)
+	converter, ok := cmdConverters[cmdType]
+	if !ok {
+		return nil, fmt.Errorf("Cannot parse line '%s' as converter is not set", line)
+	}
+
+	return converter(cmdType, words)
 }
 
 func (p Parser) readNextLine() (string, error) {

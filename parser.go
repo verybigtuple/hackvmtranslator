@@ -116,6 +116,7 @@ type Command struct {
 // Parser struct for parsing VM cmds line by line
 type Parser struct {
 	reader *bufio.Reader
+	lCount int
 }
 
 func NewParser(r *bufio.Reader) *Parser {
@@ -123,7 +124,7 @@ func NewParser(r *bufio.Reader) *Parser {
 	return &p
 }
 
-func (p Parser) ParseNext() (*Command, error) {
+func (p *Parser) ParseNext() (*Command, error) {
 	line, err := p.readNextCodeLine()
 	if err != nil {
 		return nil, err
@@ -131,34 +132,42 @@ func (p Parser) ParseNext() (*Command, error) {
 
 	words := strings.Fields(line)
 	if len(words) == 0 {
-		return nil, fmt.Errorf("No words in the line '%s'", line)
+		return nil, fmt.Errorf("Line %d: No words parsed", p.lCount)
 	}
 
 	firstWord := words[0]
 	cmdType, ok := cmdTypes[firstWord]
 	if !ok {
-		return nil, fmt.Errorf("Unknown command %s", firstWord)
+		return nil, fmt.Errorf("Line %d: Unknown command %s", p.lCount, firstWord)
 	}
 
 	converter, ok := cmdConverters[cmdType]
 	if !ok {
-		return nil, fmt.Errorf("Cannot parse line '%s' as converter is not set", line)
+		return nil, fmt.Errorf(
+			"Line %d: Cannot parse line '%s' as converter is not set",
+			p.lCount, line,
+		)
+	}
+	cmd, err := converter(cmdType, words)
+	if err != nil {
+		return nil, fmt.Errorf("Line %d: %w", p.lCount, err)
 	}
 
-	return converter(cmdType, words)
+	return cmd, nil
 }
 
-func (p Parser) readNextLine() (string, error) {
+func (p *Parser) readNextLine() (string, error) {
 	line, err := p.reader.ReadString('\n')
 	// In case the last line does not finish with \n
 	if err != nil && len(line) == 0 {
 		return "", err
 	}
+	p.lCount++
 	line = strings.Trim(line, " \t\r\n")
 	return line, nil
 }
 
-func (p Parser) readNextCodeLine() (string, error) {
+func (p *Parser) readNextCodeLine() (string, error) {
 	for {
 		line, err := p.readNextLine()
 		if err != nil {

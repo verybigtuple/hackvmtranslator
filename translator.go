@@ -39,6 +39,37 @@ func parseCmdline() (inFilePath string, outFilePath string, err error) {
 	return
 }
 
+func getInputFiles(path string) ([]string, error) {
+	rootPathInfo, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	var matches []string
+
+	if rootPathInfo.IsDir() {
+		err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.IsDir() {
+				return nil
+			}
+			if m, err := filepath.Match("*.vm", path); err != nil {
+				return err
+			} else if m {
+				matches = append(matches, path)
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		matches = append(matches, path)
+	}
+	return matches, nil
+}
+
 func run(stPrefix string, inReader *bufio.Reader, outWriter *bufio.Writer) error {
 	parser := NewParser(inReader)
 	codeWr := NewCodeWriter(outWriter, stPrefix, "")

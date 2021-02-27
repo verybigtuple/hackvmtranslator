@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"container/heap"
 	"errors"
 	"flag"
 	"fmt"
@@ -54,7 +55,7 @@ func getInputFiles(path string) ([]string, error) {
 			if info.IsDir() {
 				return nil
 			}
-			if m, err := filepath.Match("*.vm", path); err != nil {
+			if m, err := filepath.Match("*.vm", filepath.Base(path)); err != nil {
 				return err
 			} else if m {
 				matches = append(matches, path)
@@ -89,7 +90,7 @@ func run(stPrefix string, inReader *bufio.Reader, outWriter *bufio.Writer) error
 	return err
 }
 
-func worker(filePath string, result chan<- *strings.Builder, errChan chan<- error) {
+func worker(filePath string, result chan<- *trResult, errChan chan<- error) {
 	inFile, err := os.Open(filePath)
 	if err != nil {
 		errChan <- err
@@ -101,14 +102,16 @@ func worker(filePath string, result chan<- *strings.Builder, errChan chan<- erro
 	inReader := bufio.NewReader(inFile)
 	sBuilder := &strings.Builder{}
 	outWriter := bufio.NewWriter(sBuilder)
-	stPrefix := strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath))
+
+	fBase := filepath.Base(filePath)
+	stPrefix := strings.TrimSuffix(fBase, filepath.Ext(filePath))
 	err = run(stPrefix, inReader, outWriter)
 	if err != nil {
 		errChan <- fmt.Errorf("File %s: %w", filePath, err)
 		return
 	}
 	outWriter.Flush()
-	result <- sBuilder
+	result <- &trResult{Name: fBase, Builder: sBuilder}
 }
 
 func main() {
@@ -125,19 +128,20 @@ func main() {
 	}
 
 	errChan := make(chan error)
-	result := make(chan *strings.Builder)
+	result := make(chan *trResult)
 	for _, inPath := range inPaths {
 		go worker(inPath, result, errChan)
 	}
 
 	var allErrs []error
-	var allRes []*strings.Builder
+	resultQueue := resPriotityQueue{}
+	heap.Init(&resultQueue)
 	for i := 0; i < len(inPaths); i++ {
 		select {
 		case e := <-errChan:
 			allErrs = append(allErrs, e)
 		case r := <-result:
-			allRes = append(allRes, r)
+			heap.Push(&resultQueue, r)
 		}
 	}
 
@@ -162,8 +166,9 @@ func main() {
 		}
 	}()
 
-	for _, b := range allRes {
-		outFile.WriteString(b.String())
+	for len(resultQueue) > 0 {
+		r := heap.Pop(&resultQueue).(*trResult)
+		outFile.WriteString(r.Builder.String())
 	}
 	fmt.Printf("Asm file saved as %v\n", outFilePath)
 }

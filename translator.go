@@ -89,6 +89,28 @@ func run(stPrefix string, inReader *bufio.Reader, outWriter *bufio.Writer) error
 	return err
 }
 
+func worker(filePath string, result chan<- *strings.Builder, errChan chan<- error) {
+	inFile, err := os.Open(filePath)
+	if err != nil {
+		errChan <- err
+	}
+	defer inFile.Close()
+
+	fmt.Printf("Reading file %s\n", filePath)
+
+	inReader := bufio.NewReader(inFile)
+	sBuilder := &strings.Builder{}
+	outWriter := bufio.NewWriter(sBuilder)
+	stPrefix := strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath))
+	err = run(stPrefix, inReader, outWriter)
+	if err != nil {
+		errChan <- fmt.Errorf("File %s: %w", filePath, err)
+		return
+	}
+	outWriter.Flush()
+	result <- sBuilder
+}
+
 func main() {
 	inFilePath, outFilePath, err := parseCmdline()
 	if err != nil {
@@ -96,12 +118,36 @@ func main() {
 		os.Exit(1)
 	}
 
-	inFile, err := os.Open(inFilePath)
+	inPaths, err := getInputFiles(inFilePath)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, fmt.Sprintf("Cannot open input file: %v", err))
+		fmt.Fprintln(os.Stderr, fmt.Sprintf("Cannot get input file or directory: %v", err))
 		os.Exit(2)
 	}
-	defer inFile.Close()
+
+	errChan := make(chan error)
+	result := make(chan *strings.Builder)
+	for _, inPath := range inPaths {
+		go worker(inPath, result, errChan)
+	}
+
+	var allErrs []error
+	var allRes []*strings.Builder
+	for i := 0; i < len(inPaths); i++ {
+		select {
+		case e := <-errChan:
+			allErrs = append(allErrs, e)
+		case r := <-result:
+			allRes = append(allRes, r)
+		}
+	}
+
+	if len(allErrs) > 0 {
+		fmt.Fprintln(os.Stderr, "Errors during translation:")
+		for _, err := range allErrs {
+			fmt.Fprintln(os.Stderr, err)
+		}
+		os.Exit(3)
+	}
 
 	outFile, err := os.Create(outFilePath)
 	if err != nil {
@@ -116,13 +162,8 @@ func main() {
 		}
 	}()
 
-	inReader := bufio.NewReader(inFile)
-	outWriter := bufio.NewWriter(outFile)
-	stPrefix := strings.TrimSuffix(filepath.Base(inFilePath), filepath.Ext(inFilePath))
-	err = run(stPrefix, inReader, outWriter)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, fmt.Sprintf("Cannot create output file: %v", err))
-		os.Exit(3)
+	for _, b := range allRes {
+		outFile.WriteString(b.String())
 	}
 	fmt.Printf("Asm file saved as %v\n", outFilePath)
 }

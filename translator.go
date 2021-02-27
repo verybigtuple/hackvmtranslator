@@ -90,7 +90,7 @@ func run(stPrefix string, inReader *bufio.Reader, outWriter *bufio.Writer) error
 	return err
 }
 
-func worker(filePath string, result chan<- *trResult, errChan chan<- error) {
+func processVmFile(filePath string, result chan<- *trResult, errChan chan<- error) {
 	inFile, err := os.Open(filePath)
 	if err != nil {
 		errChan <- err
@@ -130,7 +130,7 @@ func main() {
 	errChan := make(chan error)
 	result := make(chan *trResult)
 	for _, inPath := range inPaths {
-		go worker(inPath, result, errChan)
+		go processVmFile(inPath, result, errChan)
 	}
 
 	var allErrs []error

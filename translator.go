@@ -114,6 +114,27 @@ func processVmFile(filePath string, result chan<- *trResult, errChan chan<- erro
 	result <- &trResult{Name: fBase, Builder: sBuilder}
 }
 
+func writeAsmFile(filePath string, rq *resPriotityQueue) (err error) {
+	outFile, err := os.Create(filePath)
+	if err != nil {
+		err = fmt.Errorf("Cannot create output file: %w", err)
+		return
+	}
+	defer func() {
+		cerr := outFile.Close()
+		if cerr != nil {
+			err = fmt.Errorf("Cannot close output file: %w", cerr)
+		}
+	}()
+
+	for len(*rq) > 0 {
+		r := heap.Pop(rq).(*trResult)
+		_, err = outFile.WriteString(r.Builder.String())
+	}
+	fmt.Printf("Asm file saved as %v\n", filePath)
+	return
+}
+
 func main() {
 	inFilePath, outFilePath, err := parseCmdline()
 	if err != nil {
@@ -153,22 +174,9 @@ func main() {
 		os.Exit(3)
 	}
 
-	outFile, err := os.Create(outFilePath)
+	err = writeAsmFile(outFilePath, &resultQueue)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, fmt.Sprintf("Cannot create output file: %v", err))
-		os.Exit(2)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(3)
 	}
-	defer func() {
-		err := outFile.Close()
-		if err != nil {
-			fmt.Fprintln(os.Stderr, fmt.Sprintf("Cannot close output file: %v", err))
-			os.Exit(2)
-		}
-	}()
-
-	for len(resultQueue) > 0 {
-		r := heap.Pop(&resultQueue).(*trResult)
-		outFile.WriteString(r.Builder.String())
-	}
-	fmt.Printf("Asm file saved as %v\n", outFilePath)
 }

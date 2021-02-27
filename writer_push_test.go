@@ -10,7 +10,7 @@ func runTestLine(t *testing.T, tc Command, want []string) {
 	sb := strings.Builder{}
 	writer := bufio.NewWriter(&sb)
 
-	codeWriter := NewCodeWriter(writer, "test", "func")
+	codeWriter := NewCodeWriter(writer, "", "test", "func")
 	err := codeWriter.WriteCommand(tc)
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)

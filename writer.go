@@ -10,6 +10,7 @@ type CodeWriter struct {
 	writer *bufio.Writer
 	asm    *asmBuilder
 
+	name     string
 	stPrefix string
 	fnPrefix string
 	eqCount  int
@@ -18,11 +19,22 @@ type CodeWriter struct {
 }
 
 // NewCodeWriter retuns a pointer to a new CodeWriter
-func NewCodeWriter(w *bufio.Writer, stPrefix, fnPrefix string) *CodeWriter {
+func NewCodeWriter(w *bufio.Writer, name, stPrefix, fnPrefix string) *CodeWriter {
 	if fnPrefix == "" {
 		fnPrefix = "default"
 	}
-	return &CodeWriter{writer: w, asm: newAsmBuilder(), stPrefix: stPrefix, fnPrefix: fnPrefix}
+	cw := CodeWriter{
+		writer:   w,
+		asm:      newAsmBuilder(),
+		name:     name,
+		stPrefix: stPrefix,
+		fnPrefix: fnPrefix,
+	}
+
+	if name != "" {
+		cw.asm.AddComment(name)
+	}
+	return &cw
 }
 
 // WriteCommand writes a command to a writer passed to NewCodeWriter

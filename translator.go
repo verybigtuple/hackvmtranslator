@@ -71,9 +71,9 @@ func getInputFiles(path string) ([]string, error) {
 	return matches, nil
 }
 
-func run(stPrefix string, inReader *bufio.Reader, outWriter *bufio.Writer) error {
+func run(writerName, stPrefix string, inReader *bufio.Reader, outWriter *bufio.Writer) error {
 	parser := NewParser(inReader)
-	codeWr := NewCodeWriter(outWriter, stPrefix, "")
+	codeWr := NewCodeWriter(outWriter, writerName, stPrefix, "")
 	for {
 		cmd, err := parser.ParseNext()
 		if errors.Is(err, io.EOF) {
@@ -105,7 +105,7 @@ func processVMFile(filePath string, result chan<- *trResult, errChan chan<- erro
 
 	fBase := filepath.Base(filePath)
 	stPrefix := strings.TrimSuffix(fBase, filepath.Ext(filePath))
-	err = run(stPrefix, inReader, outWriter)
+	err = run(fBase, stPrefix, inReader, outWriter)
 	if err != nil {
 		errChan <- fmt.Errorf("File %s: %w", filePath, err)
 		return

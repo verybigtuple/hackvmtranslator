@@ -185,7 +185,11 @@ func (ah *asmBuilder) PointerFromD(offset int) {
 }
 
 func (ah *asmBuilder) AtLabel(fnPrefix, label string) {
-	ah.builder.WriteString("@" + fnPrefix + "$" + label + "\n")
+	if fnPrefix == "" {
+		ah.builder.WriteString("@" + label + "\n")
+	} else {
+		ah.builder.WriteString("@" + fnPrefix + "$" + label + "\n")
+	}
 }
 
 func (ah *asmBuilder) SetLabel(fnPrefix, label string) {

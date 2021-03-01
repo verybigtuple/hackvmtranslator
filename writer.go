@@ -37,6 +37,11 @@ func NewCodeWriter(w *bufio.Writer, name, stPrefix, fnPrefix string) *CodeWriter
 	return &cw
 }
 
+// NewCodeWriterBootstrap creates Codewriter for Bootstrap
+func NewCodeWriterBootstrap(w *bufio.Writer) *CodeWriter {
+	return NewCodeWriter(w, "Bootstrap", "", "")
+}
+
 // WriteCommand writes a command to a writer passed to NewCodeWriter
 func (cw *CodeWriter) WriteCommand(cmd Command) (err error) {
 	switch cmd.CmdType {
@@ -57,6 +62,20 @@ func (cw *CodeWriter) WriteCommand(cmd Command) (err error) {
 	case cmdIfGoto:
 		err = cw.writeIfGotoCmd(cmd)
 	}
+	return
+}
+
+func (cw *CodeWriter) WriteBootstrap() (err error) {
+	// Init SP
+	cw.asm.ArbitraryCmd("@256")
+	cw.asm.ArbitraryCmd("D=A")
+	cw.asm.ArbitraryCmd("@SP")
+	cw.asm.ArbitraryCmd("M=D")
+	// Go to Sys.init function
+	cw.asm.AtLabel("", "Sys.init")
+	cw.asm.ArbitraryCmd("0;JMP")
+
+	_, err = cw.writer.WriteString(cw.asm.CodeAsm())
 	return
 }
 

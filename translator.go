@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 func parseCmdline() (inFilePath string, outFilePath string, err error) {
@@ -90,7 +91,14 @@ func run(writerName, stPrefix string, inReader *bufio.Reader, outWriter *bufio.W
 	return err
 }
 
-func processVMFile(filePath string, result chan<- *trResult, errChan chan<- error) {
+func processVMFile(
+	filePath string,
+	result chan<- *trResult,
+	errChan chan<- error,
+	wg *sync.WaitGroup,
+) {
+	defer wg.Done()
+
 	inFile, err := os.Open(filePath)
 	if err != nil {
 		errChan <- err
@@ -112,6 +120,31 @@ func processVMFile(filePath string, result chan<- *trResult, errChan chan<- erro
 	}
 	outWriter.Flush()
 	result <- &trResult{Name: fBase, Builder: sBuilder}
+}
+
+func gatherResults(r <-chan *trResult, e <-chan error, wg *sync.WaitGroup) (*resPriotityQueue, []error) {
+	es := []error{}
+	rq := resPriotityQueue{}
+	heap.Init(&rq)
+
+	done := make(chan bool)
+	go func() {
+		wg.Wait()
+		done <- true
+	}()
+
+RLoop:
+	for {
+		select {
+		case err := <-e:
+			es = append(es, err)
+		case res := <-r:
+			heap.Push(&rq, res)
+		case <-done:
+			break RLoop
+		}
+	}
+	return &rq, es
 }
 
 func writeAsmFile(filePath string, rq *resPriotityQueue) (err error) {
@@ -148,24 +181,15 @@ func main() {
 		os.Exit(2)
 	}
 
+	resChan := make(chan *trResult)
 	errChan := make(chan error)
-	result := make(chan *trResult)
+	wg := &sync.WaitGroup{}
 	for _, inPath := range inPaths {
-		go processVMFile(inPath, result, errChan)
+		wg.Add(1)
+		go processVMFile(inPath, resChan, errChan, wg)
 	}
 
-	var allErrs []error
-	resultQueue := resPriotityQueue{}
-	heap.Init(&resultQueue)
-	for i := 0; i < len(inPaths); i++ {
-		select {
-		case e := <-errChan:
-			allErrs = append(allErrs, e)
-		case r := <-result:
-			heap.Push(&resultQueue, r)
-		}
-	}
-
+	resultQueue, allErrs := gatherResults(resChan, errChan, wg)
 	if len(allErrs) > 0 {
 		fmt.Fprintln(os.Stderr, "Errors during translation:")
 		for _, err := range allErrs {
@@ -173,8 +197,7 @@ func main() {
 		}
 		os.Exit(3)
 	}
-
-	err = writeAsmFile(outFilePath, &resultQueue)
+	err = writeAsmFile(outFilePath, resultQueue)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(3)

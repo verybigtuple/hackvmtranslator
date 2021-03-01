@@ -13,9 +13,15 @@ import (
 	"sync"
 )
 
-func parseCmdline() (inFilePath string, outFilePath string, err error) {
+func parseCmdline() (inFilePath, outFilePath string, noBootstrap bool, err error) {
 	inFileFlag := flag.String("in", "", "Input file. Usually has the extension '.vm'")
 	outFileFlag := flag.String("out", "", "Output file. Usually has the extension '.asm'")
+	flag.BoolVar(
+		&noBootstrap,
+		"nb",
+		false,
+		"Translator does not write the bootstrapping code to a result asm file",
+	)
 	flag.Parse()
 
 	inFilePath = *inFileFlag
@@ -184,7 +190,7 @@ func writeAsmFile(filePath string, rq *resPriotityQueue) (err error) {
 }
 
 func main() {
-	inFilePath, outFilePath, err := parseCmdline()
+	inFilePath, outFilePath, noBoot, err := parseCmdline()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, fmt.Sprintf("Argument Error: %v", err))
 		os.Exit(1)
@@ -200,9 +206,10 @@ func main() {
 	errChan := make(chan error)
 	wg := &sync.WaitGroup{}
 
-	wg.Add(1)
-	go processBootstrap(resChan, errChan, wg)
-
+	if !noBoot {
+		wg.Add(1)
+		go processBootstrap(resChan, errChan, wg)
+	}
 	for _, inPath := range inPaths {
 		wg.Add(1)
 		go processVMFile(inPath, resChan, errChan, wg)

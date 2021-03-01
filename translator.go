@@ -91,6 +91,21 @@ func run(writerName, stPrefix string, inReader *bufio.Reader, outWriter *bufio.W
 	return err
 }
 
+func processBootstrap(result chan<- *trResult, errChan chan<- error, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	sBuilder := &strings.Builder{}
+	outWriter := bufio.NewWriter(sBuilder)
+	bsCodeWriter := NewCodeWriterBootstrap(outWriter)
+	err := bsCodeWriter.WriteBootstrap()
+	if err != nil {
+		errChan <- err
+		return
+	}
+	outWriter.Flush()
+	result <- &trResult{bootstrap, sBuilder}
+}
+
 func processVMFile(
 	filePath string,
 	result chan<- *trResult,
@@ -184,6 +199,10 @@ func main() {
 	resChan := make(chan *trResult)
 	errChan := make(chan error)
 	wg := &sync.WaitGroup{}
+
+	wg.Add(1)
+	go processBootstrap(resChan, errChan, wg)
+
 	for _, inPath := range inPaths {
 		wg.Add(1)
 		go processVMFile(inPath, resChan, errChan, wg)

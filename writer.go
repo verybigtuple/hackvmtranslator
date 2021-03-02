@@ -72,7 +72,7 @@ func (cw *CodeWriter) WriteBootstrap() (err error) {
 	cw.asm.ArbitraryCmd("@SP")
 	cw.asm.ArbitraryCmd("M=D")
 	// Go to Sys.init function
-	cw.asm.AtLabel("", "Sys.init")
+	cw.asm.AtLabel("Sys.init")
 	cw.asm.ArbitraryCmd("0;JMP")
 
 	_, err = cw.writer.WriteString(cw.asm.CodeAsm())
@@ -187,7 +187,7 @@ func (cw *CodeWriter) writeArithmCond(cmd Command) error {
 
 func (cw *CodeWriter) writeGotoCmd(cmd Command) error {
 	cw.asm.AddComment("goto " + cmd.Arg1)
-	cw.asm.AtLabel(cw.fnPrefix, cmd.Arg1)
+	cw.asm.AtFuncLabel(cw.fnPrefix, cmd.Arg1)
 	cw.asm.ArbitraryCmd("0;JMP")
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err
@@ -195,7 +195,7 @@ func (cw *CodeWriter) writeGotoCmd(cmd Command) error {
 
 func (cw *CodeWriter) writeLabelCmd(cmd Command) error {
 	cw.asm.AddComment("label " + cmd.Arg1)
-	cw.asm.SetLabel(cw.fnPrefix, cmd.Arg1)
+	cw.asm.SetFuncLabel(cw.fnPrefix, cmd.Arg1)
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err
 }
@@ -203,7 +203,7 @@ func (cw *CodeWriter) writeLabelCmd(cmd Command) error {
 func (cw *CodeWriter) writeIfGotoCmd(cmd Command) error {
 	cw.asm.AddComment("if-goto " + cmd.Arg1)
 	cw.asm.FromStackToD()
-	cw.asm.AtLabel(cw.fnPrefix, cmd.Arg1)
+	cw.asm.AtFuncLabel(cw.fnPrefix, cmd.Arg1)
 	cw.asm.ArbitraryCmd("D;JNE")
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err

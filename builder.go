@@ -87,12 +87,12 @@ func (ah *asmBuilder) CondFalseDefault() {
 func (ah *asmBuilder) CondJump(prefix, cond, jmp string, c int) {
 	up := strings.ToUpper(cond)
 	label := fmt.Sprintf("%s.%s_END_%d", prefix, up, c)
-	ah.builder.WriteString("@" + label + "\n")
+	ah.AtLabel(label)
 	ah.builder.WriteString("D;" + jmp + "\n")
 	ah.builder.WriteString("@SP\n")
 	ah.builder.WriteString("A=M-1\n")
 	ah.builder.WriteString("M=-1\n")
-	ah.builder.WriteString("(" + label + ")\n")
+	ah.SetLabel(label)
 }
 
 // FromMemToD adds D=M instruction
@@ -185,14 +185,20 @@ func (ah *asmBuilder) PointerFromD(offset int) {
 	ah.builder.WriteString("M=D\n")
 }
 
-func (ah *asmBuilder) AtLabel(fnPrefix, label string) {
-	if fnPrefix == "" {
-		ah.builder.WriteString("@" + label + "\n")
-	} else {
-		ah.builder.WriteString("@" + fnPrefix + "$" + label + "\n")
-	}
+func (ah *asmBuilder) AtFuncLabel(fnPrefix, label string) {
+	fLabel := fnPrefix + "$" + label
+	ah.AtLabel(fLabel)
 }
 
-func (ah *asmBuilder) SetLabel(fnPrefix, label string) {
-	ah.builder.WriteString("(" + fnPrefix + "$" + label + ")\n")
+func (ah *asmBuilder) SetFuncLabel(fnPrefix, label string) {
+	fLabel := fnPrefix + "$" + label
+	ah.SetLabel(fLabel)
+}
+
+func (ah *asmBuilder) AtLabel(label string) {
+	ah.builder.WriteString("@" + label + "\n")
+}
+
+func (ah *asmBuilder) SetLabel(label string) {
+	ah.builder.WriteString("(" + label + ")\n")
 }

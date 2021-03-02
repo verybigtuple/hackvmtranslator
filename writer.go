@@ -171,13 +171,13 @@ func (cw *CodeWriter) writeArithmCond(cmd Command) error {
 	cw.asm.CondFalseDefault()
 	switch cmd.Arg1 {
 	case "eq":
-		cw.asm.CondJump(cw.stPrefix, cmd.Arg1, cw.eqCount, "JNE")
+		cw.asm.CondJump(cw.stPrefix, cmd.Arg1, "JNE", cw.eqCount)
 		cw.eqCount++
 	case "gt":
-		cw.asm.CondJump(cw.stPrefix, cmd.Arg1, cw.gtCount, "JLE")
+		cw.asm.CondJump(cw.stPrefix, cmd.Arg1, "JLE", cw.gtCount)
 		cw.gtCount++
 	case "lt":
-		cw.asm.CondJump(cw.stPrefix, cmd.Arg1, cw.ltCount, "JGE")
+		cw.asm.CondJump(cw.stPrefix, cmd.Arg1, "JGE", cw.ltCount)
 		cw.ltCount++
 	}
 

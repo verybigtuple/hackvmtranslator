@@ -84,7 +84,7 @@ func (ah *asmBuilder) CondFalseDefault() {
 	ah.builder.WriteString("M=0\n")
 }
 
-func (ah *asmBuilder) CondJump(prefix, cond string, c int, jmp string) {
+func (ah *asmBuilder) CondJump(prefix, cond, jmp string, c int) {
 	up := strings.ToUpper(cond)
 	label := fmt.Sprintf("%s.%s_END_%d", prefix, up, c)
 	ah.builder.WriteString("@" + label + "\n")

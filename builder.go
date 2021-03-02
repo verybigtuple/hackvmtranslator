@@ -84,14 +84,15 @@ func (ah *asmBuilder) CondFalseDefault() {
 	ah.builder.WriteString("M=0\n")
 }
 
-func (ah *asmBuilder) CondJump(cond string, c int, jmp string) {
+func (ah *asmBuilder) CondJump(prefix, cond string, c int, jmp string) {
 	up := strings.ToUpper(cond)
-	ah.builder.WriteString(fmt.Sprintf("@%s_END_%d\n", up, c))
+	label := fmt.Sprintf("%s.%s_END_%d", prefix, up, c)
+	ah.builder.WriteString("@" + label + "\n")
 	ah.builder.WriteString("D;" + jmp + "\n")
 	ah.builder.WriteString("@SP\n")
 	ah.builder.WriteString("A=M-1\n")
 	ah.builder.WriteString("M=-1\n")
-	ah.builder.WriteString(fmt.Sprintf("(%s_END_%d)\n", up, c))
+	ah.builder.WriteString("(" + label + ")\n")
 }
 
 // FromMemToD adds D=M instruction

@@ -50,6 +50,10 @@ func TestParserRegular(t *testing.T) {
 			line: "if-goto testLabel",
 			want: Command{cmdIfGoto, "testLabel", 0},
 		},
+		{
+			line: "function Main.test 2",
+			want: Command{cmdFunction, "Main.test", 2},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -110,6 +114,9 @@ func TestParserErrors(t *testing.T) {
 		{"Wrong arithmetic arg", "add local"},
 		{"Too few goto arg", "label"},
 		{"Too many goto arg", "goto label1 label2"},
+		{"No offset in function", "function Main.Test"},
+		{"Illegal offset in function", "function Main.Test -1"},
+		{"Too many function args", "function Main.Test 0 1"},
 	}
 
 	for _, tc := range testCase {

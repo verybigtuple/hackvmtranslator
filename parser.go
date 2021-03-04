@@ -21,6 +21,7 @@ const (
 	cmdLabel
 	cmdGoto
 	cmdIfGoto
+	cmdFunction
 )
 
 var cmdTypes = map[string]CommandType{
@@ -38,6 +39,7 @@ var cmdTypes = map[string]CommandType{
 	labelKey:  cmdLabel,
 	gotoKey:   cmdGoto,
 	ifgotoKey: cmdIfGoto,
+	funcKey:   cmdFunction,
 }
 
 var cmdConverters = map[CommandType]func(CommandType, []string) (*Command, error){
@@ -49,6 +51,7 @@ var cmdConverters = map[CommandType]func(CommandType, []string) (*Command, error
 	cmdLabel:            conevrtLabeled,
 	cmdGoto:             conevrtLabeled,
 	cmdIfGoto:           conevrtLabeled,
+	cmdFunction:         convertFunc,
 }
 
 func checkNullArgs(words []string) (err error) {
@@ -104,6 +107,17 @@ func conevrtLabeled(ct CommandType, words []string) (*Command, error) {
 		return nil, err
 	}
 	return &Command{CmdType: ct, Arg1: label}, nil
+}
+
+func convertFunc(ct CommandType, words []string) (*Command, error) {
+	funcName, offset, err := checkTwoArgs(words)
+	if err != nil {
+		return nil, err
+	}
+	if offset < 0 {
+		return nil, fmt.Errorf("Offset cannot be negative")
+	}
+	return &Command{ct, funcName, offset}, nil
 }
 
 // Command is a struct for a parsed VM cmd

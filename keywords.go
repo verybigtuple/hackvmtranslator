@@ -18,6 +18,7 @@ const (
 	labelKey  = "label"
 	gotoKey   = "goto"
 	ifgotoKey = "if-goto"
+	funcKey   = "function"
 
 	// Segments
 	localKey    = "local"

@@ -22,6 +22,7 @@ const (
 	cmdGoto
 	cmdIfGoto
 	cmdFunction
+	cmdCall
 )
 
 var cmdTypes = map[string]CommandType{
@@ -40,6 +41,7 @@ var cmdTypes = map[string]CommandType{
 	gotoKey:   cmdGoto,
 	ifgotoKey: cmdIfGoto,
 	funcKey:   cmdFunction,
+	callKey:   cmdCall,
 }
 
 var cmdConverters = map[CommandType]func(CommandType, []string) (*Command, error){
@@ -52,6 +54,7 @@ var cmdConverters = map[CommandType]func(CommandType, []string) (*Command, error
 	cmdGoto:             conevrtLabeled,
 	cmdIfGoto:           conevrtLabeled,
 	cmdFunction:         convertFunc,
+	cmdCall:             convertFunc,
 }
 
 func checkNullArgs(words []string) (err error) {

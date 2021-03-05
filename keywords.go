@@ -20,6 +20,7 @@ const (
 	ifgotoKey = "if-goto"
 	funcKey   = "function"
 	callKey   = "call"
+	returnKey = "return"
 
 	// Segments
 	localKey    = "local"

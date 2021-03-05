@@ -58,6 +58,10 @@ func TestParserRegular(t *testing.T) {
 			line: "call Main.test 2",
 			want: Command{cmdCall, "Main.test", 2},
 		},
+		{
+			line: "return",
+			want: Command{cmdReturn, "", 0},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -124,6 +128,7 @@ func TestParserErrors(t *testing.T) {
 		{"No offset in call", "call Main.Test"},
 		{"Illegal offset in call", "call Main.Test -1"},
 		{"Too many call args", "call Main.Test 0 1"},
+		{"Args in return", "return 0"},
 	}
 
 	for _, tc := range testCase {

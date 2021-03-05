@@ -42,27 +42,23 @@ func NewCodeWriterBootstrap(w *bufio.Writer) *CodeWriter {
 	return NewCodeWriter(w, "Bootstrap", "", "")
 }
 
+var writers = map[CommandType]func(*CodeWriter, Command) (err error){
+	cmdPush:             (*CodeWriter).writePush,
+	cmdPop:              (*CodeWriter).writePop,
+	cmdArithmeticBinary: (*CodeWriter).writeAritmBinary,
+	cmdArithmeticUnary:  (*CodeWriter).writeArithmUnary,
+	cmdArithmeticCond:   (*CodeWriter).writeArithmCond,
+	cmdGoto:             (*CodeWriter).writeGotoCmd,
+	cmdLabel:            (*CodeWriter).writeLabelCmd,
+	cmdIfGoto:           (*CodeWriter).writeIfGotoCmd,
+}
+
 // WriteCommand writes a command to a writer passed to NewCodeWriter
-func (cw *CodeWriter) WriteCommand(cmd Command) (err error) {
-	switch cmd.CmdType {
-	case cmdPush:
-		err = cw.writePush(cmd)
-	case cmdPop:
-		err = cw.writePop(cmd)
-	case cmdArithmeticBinary:
-		err = cw.writeAritmBinary(cmd)
-	case cmdArithmeticUnary:
-		err = cw.writeArithmUnary(cmd)
-	case cmdArithmeticCond:
-		err = cw.writeArithmCond(cmd)
-	case cmdGoto:
-		err = cw.writeGotoCmd(cmd)
-	case cmdLabel:
-		err = cw.writeLabelCmd(cmd)
-	case cmdIfGoto:
-		err = cw.writeIfGotoCmd(cmd)
+func (cw *CodeWriter) WriteCommand(cmd Command) error {
+	if w, ok := writers[cmd.CmdType]; ok {
+		return w(cw, cmd)
 	}
-	return
+	return fmt.Errorf("There is no writer for cmd")
 }
 
 func (cw *CodeWriter) WriteBootstrap() (err error) {

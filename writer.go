@@ -51,6 +51,7 @@ var writers = map[CommandType]func(*CodeWriter, Command) (err error){
 	cmdGoto:             (*CodeWriter).writeGotoCmd,
 	cmdLabel:            (*CodeWriter).writeLabelCmd,
 	cmdIfGoto:           (*CodeWriter).writeIfGotoCmd,
+	cmdFunction:         (*CodeWriter).writeFunctionCmd,
 }
 
 // WriteCommand writes a command to a writer passed to NewCodeWriter
@@ -96,7 +97,7 @@ func (cw *CodeWriter) writePush(cmd Command) error {
 		cw.asm.FromMemToD()
 	}
 
-	cw.asm.FromDtoStack()
+	cw.asm.ToStack("D")
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err
 }
@@ -201,6 +202,31 @@ func (cw *CodeWriter) writeIfGotoCmd(cmd Command) error {
 	cw.asm.FromStackToD()
 	cw.asm.AtFuncLabel(cw.fnPrefix, cmd.Arg1)
 	cw.asm.ArbitraryCmd("D;JNE")
+	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
+	return err
+}
+
+func (cw *CodeWriter) writeFunctionCmd(cmd Command) error {
+	cw.asm.AddComment(fmt.Sprintf("function %s %d", cmd.Arg1, cmd.Arg2))
+	cw.asm.SetLabel(cmd.Arg1)
+	if cmd.Arg2 == 1 {
+		cw.asm.ToStack("0")
+	}
+	if cmd.Arg2 > 1 {
+		// Init first local var to stack w/o moving SP
+		cw.asm.ArbitraryCmd("@SP")
+		cw.asm.ArbitraryCmd("A=M")
+		cw.asm.ArbitraryCmd("M=0")
+		// the rest of vars
+		for i := 0; i < cmd.Arg2-1; i++ {
+			cw.asm.ArbitraryCmd("A=A+1")
+			cw.asm.ArbitraryCmd("M=0")
+		}
+		// Set right position in SP
+		cw.asm.ArbitraryCmd("D=A+1")
+		cw.asm.ArbitraryCmd("@SP")
+		cw.asm.ArbitraryCmd("M=D")
+	}
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err
 }

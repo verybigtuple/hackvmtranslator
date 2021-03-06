@@ -49,80 +49,61 @@ func TestFuncFunctionMore(t *testing.T) {
 	runTestLine(t, testLine, want)
 }
 
-// func TestFuncCall(t *testing.T) {
-// 	//testLine := Command{CmdType: cmdIfGoto, Arg1: "label1"}
-// 	want2 := []string{
-// 		"// call Test.func 2",
-// 		"@Test.func$return", // Push return address to stack
-// 		"@D=A",
-// 		"@SP",
-// 		"A=M",
-// 		"M=D", // Push without incrementing SP, as SP is ponting to an empty register
+func TestFuncCall(t *testing.T) {
+	testLine := Command{CmdType: cmdCall, Arg1: "Test.func", Arg2: 2}
+	want := []string{
+		"// call Test.func 2",
+		"@Test.func$return", // Push return address to stack
+		"D=A",
+		"@SP",
+		"A=M",
+		"M=D", // Push without incrementing SP, as SP is ponting to an empty register
 
-// 		"@LCL", // Push local to stack
-// 		"D=M",
-// 		"@SP",
-// 		"AM=M+1",
-// 		"M=D",
+		"@LCL", // Push local to stack
+		"D=M",
+		"@SP",
+		"AM=M+1",
+		"M=D",
 
-// 		"@ARG", // Push arg to stack
-// 		"D=M",
-// 		"@SP",
-// 		"AM=M+1",
-// 		"M=D",
+		"@ARG", // Push arg to stack
+		"D=M",
+		"@SP",
+		"AM=M+1",
+		"M=D",
 
-// 		"@THIS", // Push this to stack
-// 		"D=M",
-// 		"@SP",
-// 		"AM=M+1",
-// 		"M=D",
+		"@THIS", // Push this to stack
+		"D=M",
+		"@SP",
+		"AM=M+1",
+		"M=D",
 
-// 		"@THAT", // Push that to stack
-// 		"D=M",
-// 		"@SP",
-// 		"M=M+1",
-// 		"M=M+1",
-// 		"A=M-1",
-// 		"M=D",
+		"@THAT", // Push that to stack
+		"D=M",
+		"@SP",
+		"M=M+1",
+		"M=M+1",
+		"A=M-1",
+		"M=D",
 
-// 		"@7", // 5+2
-// 		"D=A",
-// 		"@SP",
-// 		"D=M-D", // Arg = SP - 5 - nargs
-// 		"@ARG",
-// 		"M=D",
+		"@7", // 5+2
+		"D=A",
+		"@SP",
+		"D=M-D", // Arg = SP - 5 - nargs
+		"@ARG",
+		"M=D",
 
-// 		"@SP", // LCL = SP
-// 		"D=M",
-// 		"@LCL",
-// 		"M=D",
+		"@SP", // LCL = SP
+		"D=M",
+		"@LCL",
+		"M=D",
 
-// 		"@Test.func",
-// 		"0;JMP",
+		"@Test.func",
+		"0;JMP",
 
-// 		"(@Test.func$return)",
-// 	}
-// 	//t.Error(len(want2))
-// 	//runTestLine(t, testLine, want)
-// }
-
-// func TestFuncFunction2(t *testing.T) {
-// 	//testLine := Command{CmdType: cmdIfGoto, Arg1: "label1"}
-// 	want := []string{
-// 		"// function Test.func 2",
-// 		"(Test.func)", // Push return address to stack
-// 		"@SP",
-// 		"A=M",
-// 		"M=0", // 1
-// 		"A=A+1",
-// 		"M=0", // 2
-// 		"D=A+1",
-// 		"@SP",
-// 		"M=D",
-// 	}
-// 	//t.Error(len(want))
-// 	//runTestLine(t, testLine, want)
-// }
+		"(Test.func$return)",
+	}
+	runTestLine(t, testLine, want)
+}
 
 // func TestFuncReturn(t *testing.T) {
 // 	//testLine := Command{CmdType: cmdIfGoto, Arg1: "label1"}

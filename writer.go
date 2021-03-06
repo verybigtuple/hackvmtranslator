@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"strconv"
 )
 
 // CodeWriter is a struc that writes instructions to a user's writer
@@ -52,6 +53,7 @@ var writers = map[CommandType]func(*CodeWriter, Command) (err error){
 	cmdLabel:            (*CodeWriter).writeLabelCmd,
 	cmdIfGoto:           (*CodeWriter).writeIfGotoCmd,
 	cmdFunction:         (*CodeWriter).writeFunctionCmd,
+	cmdCall:             (*CodeWriter).writeCallCmd,
 }
 
 // WriteCommand writes a command to a writer passed to NewCodeWriter
@@ -227,6 +229,53 @@ func (cw *CodeWriter) writeFunctionCmd(cmd Command) error {
 		cw.asm.ArbitraryCmd("@SP")
 		cw.asm.ArbitraryCmd("M=D")
 	}
+	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
+	return err
+}
+
+func (cw *CodeWriter) writeCallCmd(cmd Command) error {
+	cw.asm.AddComment(fmt.Sprintf("call %s %d", cmd.Arg1, cmd.Arg2))
+	cw.asm.AtFuncLabel(cmd.Arg1, "return")
+	cw.asm.ArbitraryCmd("D=A")
+	cw.asm.ArbitraryCmd("@SP")
+	cw.asm.ArbitraryCmd("A=M")
+	cw.asm.ArbitraryCmd("M=D")
+
+	segm := [...]string{"@LCL", "@ARG", "@THIS"}
+	for _, s := range segm {
+		cw.asm.ArbitraryCmd(s)
+		cw.asm.ArbitraryCmd("D=M")
+		cw.asm.ArbitraryCmd("@SP")
+		cw.asm.ArbitraryCmd("AM=M+1")
+		cw.asm.ArbitraryCmd("M=D")
+	}
+
+	cw.asm.ArbitraryCmd("@THAT")
+	cw.asm.ArbitraryCmd("D=M")
+	cw.asm.ArbitraryCmd("@SP")
+	cw.asm.ArbitraryCmd("M=M+1")
+	cw.asm.ArbitraryCmd("M=M+1")
+	cw.asm.ArbitraryCmd("A=M-1")
+	cw.asm.ArbitraryCmd("M=D")
+
+	offset := 5 + cmd.Arg2
+	cw.asm.ArbitraryCmd("@" + strconv.Itoa(offset))
+	cw.asm.ArbitraryCmd("D=A")
+	cw.asm.ArbitraryCmd("@SP")
+	cw.asm.ArbitraryCmd("D=M-D")
+	cw.asm.ArbitraryCmd("@ARG")
+	cw.asm.ArbitraryCmd("M=D")
+
+	cw.asm.ArbitraryCmd("@SP") // LCL = SP
+	cw.asm.ArbitraryCmd("D=M")
+	cw.asm.ArbitraryCmd("@LCL")
+	cw.asm.ArbitraryCmd("M=D")
+
+	cw.asm.AtLabel(cmd.Arg1)
+	cw.asm.ArbitraryCmd("0;JMP")
+
+	cw.asm.SetFuncLabel(cmd.Arg1, "return")
+
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err
 }

@@ -54,6 +54,7 @@ var writers = map[CommandType]func(*CodeWriter, Command) (err error){
 	cmdIfGoto:           (*CodeWriter).writeIfGotoCmd,
 	cmdFunction:         (*CodeWriter).writeFunctionCmd,
 	cmdCall:             (*CodeWriter).writeCallCmd,
+	cmdReturn:           (*CodeWriter).writeReturnCmd,
 }
 
 // WriteCommand writes a command to a writer passed to NewCodeWriter
@@ -275,6 +276,50 @@ func (cw *CodeWriter) writeCallCmd(cmd Command) error {
 	cw.asm.ArbitraryCmd("0;JMP")
 
 	cw.asm.SetFuncLabel(cmd.Arg1, "return")
+
+	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
+	return err
+}
+
+func (cw *CodeWriter) writeReturnCmd(cmd Command) error {
+	cw.asm.AddComment("return")
+
+	cw.asm.FromStackToD()
+	cw.asm.ArbitraryCmd("@ARG")
+	cw.asm.ArbitraryCmd("A=M")
+	cw.asm.ArbitraryCmd("M=D") //  *ARG = Pop()
+
+	cw.asm.ArbitraryCmd("@ARG")
+	cw.asm.ArbitraryCmd("D=M+1")
+	cw.asm.ArbitraryCmd("@SP")
+	cw.asm.ArbitraryCmd("M=D") // Recycle stack
+
+	segm := [...]string{"@THAT", "@THIS", "@ARG"}
+	for _, s := range segm {
+		cw.asm.ArbitraryCmd("@LCL")   // EndFrame = LCL
+		cw.asm.ArbitraryCmd("AM=M-1") // A = Endframe-1, LCL = Endframe-1
+		cw.asm.ArbitraryCmd("D=M")    // D = *(Endframe-1)
+		cw.asm.ArbitraryCmd(s)
+		cw.asm.ArbitraryCmd("M=D")
+	}
+
+	// Before changing *LCL, we should get *(Endframe-5)
+	cw.asm.ArbitraryCmd("@LCL")
+	cw.asm.ArbitraryCmd("A=M-1") // A = EndFrame - 4
+	cw.asm.ArbitraryCmd("A=A-1") // A = EndFrame - 5
+	cw.asm.ArbitraryCmd("D=M")   // D = *(EndFrame - 5)
+	cw.asm.ArbitraryCmd("@R14")
+	cw.asm.ArbitraryCmd("M=D") // RetrAddr = R14 = *(EndFrame - 5)
+
+	cw.asm.ArbitraryCmd("@LCL")   // EndFrame = LCL
+	cw.asm.ArbitraryCmd("AM=M-1") // A = Endframe-1, LCL = Endframe-1
+	cw.asm.ArbitraryCmd("D=M")    // D = *(Endframe-1)
+	cw.asm.ArbitraryCmd("@LCL")
+	cw.asm.ArbitraryCmd("M=D")
+
+	cw.asm.ArbitraryCmd("@R14")
+	cw.asm.ArbitraryCmd("A=M")
+	cw.asm.ArbitraryCmd("0;JMP")
 
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err

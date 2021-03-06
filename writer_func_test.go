@@ -105,63 +105,62 @@ func TestFuncCall(t *testing.T) {
 	runTestLine(t, testLine, want)
 }
 
-// func TestFuncReturn(t *testing.T) {
-// 	//testLine := Command{CmdType: cmdIfGoto, Arg1: "label1"}
-// 	want := []string{
-// 		"// return",
+func TestFuncReturn(t *testing.T) {
+	testLine := Command{CmdType: cmdReturn}
+	want := []string{
+		"// return",
+		
+		// *ARG = Pop()
+		"@SP",
+		"AM=M-1",
+		"D=M", // D = Pop()
+		"@ARG",
+		"A=M",
+		"M=D", //  *ARG = Pop()
 
-// 		// *ARG = Pop()
-// 		"@SP",
-// 		"AM=M-1",
-// 		"D=M", // D = Pop()
-// 		"@ARG",
-// 		"A=M",
-// 		"M=D", //  *ARG = Pop()
+		// SP = ARG + 1
+		"@ARG",
+		"D=M+1",
+		"@SP",
+		"M=D", // Recycle stack
 
-// 		// SP = ARG + 1
-// 		"@ARG",
-// 		"D=M+1",
-// 		"@SP",
-// 		"M=D", // Recycle stack
+		// LCL
+		"@LCL",   // EndFrame = LCL
+		"AM=M-1", // A = Endframe-1, LCL = Endframe-1
+		"D=M",    // D = *(Endframe-1)
+		"@THAT",
+		"M=D",
 
-// 		// LCL
-// 		"@LCL",   // EndFrame = LCL
-// 		"AM=M-1", // A = Endframe-1, LCL = Endframe-1
-// 		"D=M",    // D = *(Endframe-1)
-// 		"@THAT",
-// 		"M=D",
+		"@LCL",
+		"AM=M-1", // A = Endframe-2, LCL = Endframe-2
+		"D=M",    // D = *(Endframe-2)
+		"@THIS",
+		"M=D",
 
-// 		"@LCL",
-// 		"AM=M-1", // A = Endframe-2, LCL = Endframe-2
-// 		"D=M",    // D = *(Endframe-2)
-// 		"@THIS",
-// 		"M=D",
+		"@LCL",
+		"AM=M-1", // A = Endframe-3, LCL = Endframe-3
+		"D=M",    // D = *(Endframe-3)
+		"@ARG",
+		"M=D",
 
-// 		"@LCL",
-// 		"AM=M-1", // A = Endframe-3, LCL = Endframe-3
-// 		"D=M",    // D = *(Endframe-3)
-// 		"@ARG",
-// 		"M=D",
+		// Before changing *LCL, we should get *(Endframe-5)
+		"@LCL",
+		"A=M-1", // A = EndFrame - 4
+		"A=A-1", // A = EndFrame - 5
+		"D=M",   // D = *(EndFrame - 5)
+		"@R14",
+		"M=D", // RetrAddr = R14 = *(EndFrame - 5)
 
-// 		// Before changing *LCL, we should get *(Endframe-5)
-// 		"@LCL",
-// 		"A=M-1", // A = EndFrame - 4
-// 		"A=A-1", // A = EndFrame - 5
-// 		"D=M",   // D = *(EndFrame - 5)
-// 		"@R14",
-// 		"M=D", // RetrAddr = R14 = *(EndFrame - 5)
+		"@LCL",
+		"AM=M-1", // A = Endframe-4, LCL = Endframe-4
+		"D=M",
+		"@LCL",
+		"M=D",
 
-// 		"@LCL",
-// 		"AM=M-1", // A = Endframe-4, LCL = Endframe-4
-// 		"D=M",
-// 		"@LCL",
-// 		"M=D",
-
-// 		// Goto RetrAddress
-// 		"@R14",
-// 		"A=M",
-// 		"0;JMP",
-// 	}
-// 	//t.Error(len(want))
-// 	//runTestLine(t, testLine, want)
-// }
+		// Goto RetrAddress
+		"@R14",
+		"A=M",
+		"0;JMP",
+	}
+	runTestLine(t, testLine, want)
+}

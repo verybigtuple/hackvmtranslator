@@ -82,13 +82,17 @@ func (cw *CodeWriter) writePush(cmd Command) error {
 
 	switch {
 	case isConstantSegment(cmd.Arg1): // push constant 2
-		cw.asm.ConstToD(cmd.Arg2)
+		cw.asm.AsmCmds(cmd.Arg2, "D=A")
 	case isStaticSegment(cmd.Arg1): // push  static 2
-		cw.asm.StaticToD(cw.stPrefix, cmd.Arg2)
+		cw.asm.StaticAinstr(cw.stPrefix, cmd.Arg2)
+		cw.asm.AsmCmds("D=M")
 	case isTempSegment(cmd.Arg1): // push temp 2
-		cw.asm.TempToD(cmd.Arg2)
+		//cw.asm.TempToD(cmd.Arg2)
+		cw.asm.TempAInstr(cmd.Arg2)
+		cw.asm.AsmCmds("D=M")
 	case isPointerSegment(cmd.Arg1):
-		cw.asm.PointerToD(cmd.Arg2)
+		cw.asm.PointerAinstr(cmd.Arg2)
+		cw.asm.AsmCmds("D=M")
 	default: // push local 2
 		if cmd.Arg2 <= 3 {
 			cw.asm.SegmAddr(cmd.Arg1, cmd.Arg2)
@@ -109,13 +113,16 @@ func (cw *CodeWriter) writePop(cmd Command) error {
 	switch {
 	case isStaticSegment(cmd.Arg1):
 		cw.asm.FromStack("D")
-		cw.asm.StaticFromD(cw.stPrefix, cmd.Arg2)
+		cw.asm.StaticAinstr(cw.stPrefix, cmd.Arg2)
+		cw.asm.AsmCmds("M=D")
 	case isTempSegment(cmd.Arg1):
 		cw.asm.FromStack("D")
-		cw.asm.TempFromD(cmd.Arg2)
+		cw.asm.TempAInstr(cmd.Arg2)
+		cw.asm.AsmCmds("M=D")
 	case isPointerSegment(cmd.Arg1):
 		cw.asm.FromStack("D")
-		cw.asm.PointerFromD(cmd.Arg2)
+		cw.asm.PointerAinstr(cmd.Arg2)
+		cw.asm.AsmCmds("M=D")
 	default:
 		if cmd.Arg2 <= 7 {
 			cw.asm.FromStack("D")

@@ -28,9 +28,9 @@ var segmAInstr = map[string]string{
 	"that":     "@THAT",
 }
 
-var pointerOffsets = map[int]string{
-	0: "@THIS",
-	1: "@THAT",
+var pointerOffsets = map[int]SegmInstr{
+	0: THIS,
+	1: THAT,
 }
 
 type asmBuilder struct {
@@ -173,40 +173,24 @@ func (ah *asmBuilder) SegmAddr(segm string, offset int) {
 	}
 }
 
-// StaticToD adds asm code for storing value of a static var to the D register
-func (ah *asmBuilder) StaticToD(prefix string, id int) {
-	ah.builder.WriteString(fmt.Sprintf("@%s.%d\n", prefix, id)) //like @file.1
-	ah.builder.WriteString("D=M\n")
+// StaticAinstr adds a static A-instruction. Like @file.5
+func (ah *asmBuilder) StaticAinstr(prefix string, id int) {
+	ah.builder.WriteRune('@')
+	ah.builder.WriteString(prefix)
+	ah.builder.WriteRune('.')
+	ah.builder.WriteString(strconv.Itoa(id))
+	ah.builder.WriteRune('\n')
 }
 
-// StaticFromD adds asm code for moving value of the D-Register to a static var
-func (ah *asmBuilder) StaticFromD(prefix string, id int) {
-	ah.builder.WriteString(fmt.Sprintf("@%s.%d\n", prefix, id)) //like @file.1
-	ah.builder.WriteString("M=D\n")
-}
-
-// TempToD adds asm code for moving value of a temp var to the D register
-func (ah *asmBuilder) TempToD(offset int) {
+// StaticAinstr adds a temp A-instruction. Like @7
+func (ah *asmBuilder) TempAInstr(offset int) {
 	addr := tempBaseAddr + offset
-	ah.builder.WriteString("@" + strconv.Itoa(addr) + "\n")
-	ah.builder.WriteString("D=M\n")
+	ah.AsmCmds(addr)
 }
 
-// AddStaticFromDReg adds asm code for moving value of the D-Register to a temp var
-func (ah *asmBuilder) TempFromD(offset int) {
-	addr := tempBaseAddr + offset
-	ah.builder.WriteString("@" + strconv.Itoa(addr) + "\n")
-	ah.builder.WriteString("M=D\n")
-}
-
-func (ah *asmBuilder) PointerToD(offset int) {
-	ah.builder.WriteString(pointerOffsets[offset] + "\n")
-	ah.builder.WriteString("D=M\n")
-}
-
-func (ah *asmBuilder) PointerFromD(offset int) {
-	ah.builder.WriteString(pointerOffsets[offset] + "\n")
-	ah.builder.WriteString("M=D\n")
+// StaticAinstr adds a pointerp A-instruction. @THIS or @THAT
+func (ah *asmBuilder) PointerAinstr(offset int) {
+	ah.AsmCmds(pointerOffsets[offset])
 }
 
 func (ah *asmBuilder) AtFuncLabel(fnPrefix, label string) {

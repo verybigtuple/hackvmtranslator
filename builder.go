@@ -59,10 +59,10 @@ func (ah *asmBuilder) AddComment(comment string) {
 // ToStack adds asm code which move SP pointer and push the value of the D-register
 // to the stack
 func (ah *asmBuilder) ToStack(calc string) {
-	ah.builder.WriteString("@SP\n")
-	ah.builder.WriteString("M=M+1\n")
-	ah.builder.WriteString("A=M-1\n")
-	ah.builder.WriteString("M=" + calc + "\n")
+	ah.AsmCmds(SP, "M=M+1", "A=M-1")
+	ah.builder.WriteString("M=")
+	ah.builder.WriteString(calc)
+	ah.builder.WriteRune('\n')
 }
 
 // FromStack adds asm code which move SP pointer and pop value from the stack to the D-Register

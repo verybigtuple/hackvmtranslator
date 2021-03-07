@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -97,32 +96,6 @@ func (ah *asmBuilder) AsmCmds(cmds ...interface{}) {
 	}
 }
 
-func (ah *asmBuilder) CondFalseDefault() {
-	ah.builder.WriteString("A=A-1\n")
-	ah.builder.WriteString("D=M-D\n")
-	ah.builder.WriteString("M=0\n")
-}
-
-func (ah *asmBuilder) CondJump(prefix, cond, jmp string, c int) {
-	up := strings.ToUpper(cond)
-	label := fmt.Sprintf("%s.%s_END_%d", prefix, up, c)
-	ah.AtLabel(label)
-	ah.builder.WriteString("D;" + jmp + "\n")
-	ah.builder.WriteString("@SP\n")
-	ah.builder.WriteString("A=M-1\n")
-	ah.builder.WriteString("M=-1\n")
-	ah.SetLabel(label)
-}
-
-// ConstToD add asm code to add a integer value to the D-Register:
-// example
-// @101
-// D=A
-func (ah *asmBuilder) ConstToD(c int) {
-	ah.builder.WriteString("@" + strconv.Itoa(c) + "\n")
-	ah.builder.WriteString("D=A\n")
-}
-
 // StaticAinstr adds a static A-instruction. Like @file.5
 func (ah *asmBuilder) StaticAinstr(prefix string, id int) {
 	ah.builder.WriteRune('@')
@@ -155,6 +128,27 @@ func (ah *asmBuilder) AtFuncLabel(fnPrefix, label string) {
 func (ah *asmBuilder) SetFuncLabel(fnPrefix, label string) {
 	fLabel := fnPrefix + "$" + label
 	ah.SetLabel(fLabel)
+}
+
+func (ah *asmBuilder) arithmCondLabel(statPrefix, cond string, idx int) {
+	// static.EQ_END_5
+	ah.builder.WriteString(statPrefix)
+	ah.builder.WriteRune('.')
+	ah.builder.WriteString(strings.ToUpper(cond))
+	ah.builder.WriteString("_END_")
+	ah.builder.WriteString(strconv.Itoa(idx))
+}
+
+func (ah *asmBuilder) AtArithmCondLabel(statPrefix, cond string, idx int) {
+	ah.builder.WriteRune('@')
+	ah.arithmCondLabel(statPrefix, cond, idx)
+	ah.builder.WriteRune('\n')
+}
+
+func (ah *asmBuilder) SetArithmCondLabel(statPrefix, cond string, idx int) {
+	ah.builder.WriteRune('(')
+	ah.arithmCondLabel(statPrefix, cond, idx)
+	ah.builder.WriteString(")\n")
 }
 
 func (ah *asmBuilder) AtLabel(label string) {

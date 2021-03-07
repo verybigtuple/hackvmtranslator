@@ -10,13 +10,11 @@ type CodeWriter struct {
 	writer *bufio.Writer
 	asm    *asmBuilder
 
-	name      string
-	stPrefix  string
-	fnPrefix  string
-	eqCount   int
-	gtCount   int
-	ltCount   int
-	callCount int
+	name        string
+	stPrefix    string
+	fnPrefix    string
+	arCondCount int
+	callCount   int
 }
 
 // NewCodeWriter retuns a pointer to a new CodeWriter
@@ -194,20 +192,25 @@ func (cw *CodeWriter) writeArithmUnary(cmd Command) error {
 
 func (cw *CodeWriter) writeArithmCond(cmd Command) error {
 	cw.asm.AddComment(cmd.Arg1)
+	// Get boolean from stack to D-register
 	cw.asm.FromStack("D")
-	cw.asm.CondFalseDefault()
-	switch cmd.Arg1 {
-	case "eq":
-		cw.asm.CondJump(cw.stPrefix, cmd.Arg1, "JNE", cw.eqCount)
-		cw.eqCount++
-	case "gt":
-		cw.asm.CondJump(cw.stPrefix, cmd.Arg1, "JLE", cw.gtCount)
-		cw.gtCount++
-	case "lt":
-		cw.asm.CondJump(cw.stPrefix, cmd.Arg1, "JGE", cw.ltCount)
-		cw.ltCount++
-	}
+	// By default set to false
+	cw.asm.AsmCmds("A=A-1", "D=M-D", "M=0")
+	// Set label to jump if condition is true
+	cw.asm.AtArithmCondLabel(cw.stPrefix, cmd.Arg1, cw.arCondCount)
 
+	switch cmd.Arg1 {
+	case eqKey:
+		cw.asm.AsmCmds("D;JNE") // if D=M-D != 0 than jump to the end and leave M=false
+	case gtKey:
+		cw.asm.AsmCmds("D;JLE") // if D=M-D <=0 then jump to the end and leave M=false
+	case ltKey:
+		cw.asm.AsmCmds("D;JGE") // if D=M-D >= 0 then jump to the end and leave M=false
+	}
+	// Set true
+	cw.asm.AsmCmds(SP, "A=M-1", "M=-1")
+	cw.asm.SetArithmCondLabel(cw.stPrefix, cmd.Arg1, cw.arCondCount)
+	cw.arCondCount++
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err
 }

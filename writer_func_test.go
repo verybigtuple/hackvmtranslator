@@ -53,7 +53,7 @@ func TestFuncCall(t *testing.T) {
 	testLine := Command{CmdType: cmdCall, Arg1: "Test.func", Arg2: 2}
 	want := []string{
 		"// call Test.func 2",
-		"@Test.func$return", // Push return address to stack
+		"@test.CALL_RET_0", // Push return address to stack
 		"D=A",
 		"@SP",
 		"A=M",
@@ -100,7 +100,7 @@ func TestFuncCall(t *testing.T) {
 		"@Test.func",
 		"0;JMP",
 
-		"(Test.func$return)",
+		"(test.CALL_RET_0)",
 	}
 	runTestLine(t, testLine, want)
 }
@@ -109,7 +109,7 @@ func TestFuncReturn(t *testing.T) {
 	testLine := Command{CmdType: cmdReturn}
 	want := []string{
 		"// return",
-		
+
 		// *ARG = Pop()
 		"@SP",
 		"AM=M-1",

@@ -11,12 +11,13 @@ type CodeWriter struct {
 	writer *bufio.Writer
 	asm    *asmBuilder
 
-	name     string
-	stPrefix string
-	fnPrefix string
-	eqCount  int
-	gtCount  int
-	ltCount  int
+	name      string
+	stPrefix  string
+	fnPrefix  string
+	eqCount   int
+	gtCount   int
+	ltCount   int
+	callCount int
 }
 
 // NewCodeWriter retuns a pointer to a new CodeWriter
@@ -237,7 +238,9 @@ func (cw *CodeWriter) writeFunctionCmd(cmd Command) error {
 
 func (cw *CodeWriter) writeCallCmd(cmd Command) error {
 	cw.asm.AddComment(fmt.Sprintf("call %s %d", cmd.Arg1, cmd.Arg2))
-	cw.asm.AtFuncLabel(cmd.Arg1, "return")
+	label := fmt.Sprintf("%s.CALL_RET_%d", cw.stPrefix, cw.callCount)
+	cw.callCount++
+	cw.asm.AtLabel(label)
 	cw.asm.ArbitraryCmd("D=A")
 	cw.asm.ArbitraryCmd("@SP")
 	cw.asm.ArbitraryCmd("A=M")
@@ -276,7 +279,7 @@ func (cw *CodeWriter) writeCallCmd(cmd Command) error {
 	cw.asm.AtLabel(cmd.Arg1)
 	cw.asm.ArbitraryCmd("0;JMP")
 
-	cw.asm.SetFuncLabel(cmd.Arg1, "return")
+	cw.asm.SetLabel(label)
 
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err

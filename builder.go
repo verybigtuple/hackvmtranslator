@@ -120,14 +120,22 @@ func (ah *asmBuilder) SegmentAinstr(vmSegment string) {
 	ah.AsmCmds(varSegments[vmSegment])
 }
 
+func (ah *asmBuilder) funcLabel(fnPrefix, label string) {
+	ah.builder.WriteString(fnPrefix)
+	ah.builder.WriteRune('$')
+	ah.builder.WriteString(label)
+}
+
 func (ah *asmBuilder) AtFuncLabel(fnPrefix, label string) {
-	fLabel := fnPrefix + "$" + label
-	ah.AtLabel(fLabel)
+	ah.builder.WriteRune('@')
+	ah.funcLabel(fnPrefix, label)
+	ah.builder.WriteRune('\n')
 }
 
 func (ah *asmBuilder) SetFuncLabel(fnPrefix, label string) {
-	fLabel := fnPrefix + "$" + label
-	ah.SetLabel(fLabel)
+	ah.builder.WriteRune('(')
+	ah.funcLabel(fnPrefix, label)
+	ah.builder.WriteString(")\n")
 }
 
 func (ah *asmBuilder) arithmCondLabel(statPrefix, cond string, idx int) {
@@ -152,9 +160,13 @@ func (ah *asmBuilder) SetArithmCondLabel(statPrefix, cond string, idx int) {
 }
 
 func (ah *asmBuilder) AtLabel(label string) {
-	ah.builder.WriteString("@" + label + "\n")
+	ah.builder.WriteRune('@')
+	ah.builder.WriteString(label)
+	ah.builder.WriteRune('\n')
 }
 
 func (ah *asmBuilder) SetLabel(label string) {
-	ah.builder.WriteString("(" + label + ")\n")
+	ah.builder.WriteRune('(')
+	ah.builder.WriteString(label)
+	ah.builder.WriteString(")\n")
 }

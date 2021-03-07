@@ -67,13 +67,11 @@ func (cw *CodeWriter) WriteCommand(cmd Command) error {
 
 func (cw *CodeWriter) WriteBootstrap() (err error) {
 	// Init SP
-	cw.asm.ArbitraryCmd("@256")
-	cw.asm.ArbitraryCmd("D=A")
-	cw.asm.ArbitraryCmd("@SP")
-	cw.asm.ArbitraryCmd("M=D")
+	cw.asm.AsmCmds(256, "D=A", SP, "M=D")
 	// Call Sys.init function
 	cw.writeCallCmd(Command{cmdCall, "Sys.init", 0})
-	cw.asm.ArbitraryCmd("D=0")
+	// In order not to have 2 lablels in a row
+	cw.asm.AsmCmds("D=0")
 
 	_, err = cw.writer.WriteString(cw.asm.CodeAsm())
 	return
@@ -141,13 +139,13 @@ func (cw *CodeWriter) writeAritmBinary(cmd Command) error {
 	cw.asm.DecAddr()
 	switch cmd.Arg1 {
 	case "add":
-		cw.asm.ArbitraryCmd("M=D+M")
+		cw.asm.AsmCmds("M=D+M")
 	case "sub":
-		cw.asm.ArbitraryCmd("M=M-D")
+		cw.asm.AsmCmds("M=M-D")
 	case "and":
-		cw.asm.ArbitraryCmd("M=D&M")
+		cw.asm.AsmCmds("M=D&M")
 	case "or":
-		cw.asm.ArbitraryCmd("M=D|M")
+		cw.asm.AsmCmds("M=D|M")
 	}
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err
@@ -188,7 +186,7 @@ func (cw *CodeWriter) writeArithmCond(cmd Command) error {
 func (cw *CodeWriter) writeGotoCmd(cmd Command) error {
 	cw.asm.AddComment("goto " + cmd.Arg1)
 	cw.asm.AtFuncLabel(cw.fnPrefix, cmd.Arg1)
-	cw.asm.ArbitraryCmd("0;JMP")
+	cw.asm.AsmCmds("0;JMP")
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err
 }
@@ -204,7 +202,7 @@ func (cw *CodeWriter) writeIfGotoCmd(cmd Command) error {
 	cw.asm.AddComment("if-goto " + cmd.Arg1)
 	cw.asm.FromStackToD()
 	cw.asm.AtFuncLabel(cw.fnPrefix, cmd.Arg1)
-	cw.asm.ArbitraryCmd("D;JNE")
+	cw.asm.AsmCmds("D;JNE")
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err
 }

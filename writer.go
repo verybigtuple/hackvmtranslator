@@ -209,6 +209,8 @@ func (cw *CodeWriter) writeIfGotoCmd(cmd Command) error {
 }
 
 func (cw *CodeWriter) writeFunctionCmd(cmd Command) error {
+	cw.fnPrefix = cmd.Arg1
+
 	cw.asm.AddComment(fmt.Sprintf("function %s %d", cmd.Arg1, cmd.Arg2))
 	cw.asm.SetLabel(cmd.Arg1)
 	if cmd.Arg2 == 1 {

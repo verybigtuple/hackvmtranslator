@@ -13,8 +13,8 @@ import (
 	"sync"
 )
 
-func parseCmdline() (inFilePath, outFilePath string, noBootstrap bool, err error) {
-	inFileFlag := flag.String("in", "", "Input file. Usually has the extension '.vm'")
+func parseCmdline() (inPath, outFilePath string, noBootstrap bool, err error) {
+	inFileFlag := flag.String("in", "", "Input file or folder with *.vm files")
 	outFileFlag := flag.String("out", "", "Output file. Usually has the extension '.asm'")
 	flag.BoolVar(
 		&noBootstrap,
@@ -24,21 +24,30 @@ func parseCmdline() (inFilePath, outFilePath string, noBootstrap bool, err error
 	)
 	flag.Parse()
 
-	inFilePath = *inFileFlag
-	if inFilePath == "" {
+	inPath = *inFileFlag
+	if inPath == "" {
 		if flag.Arg(0) == "" {
-			err = fmt.Errorf("Input file is not set")
+			err = fmt.Errorf("Input file/folder is not set")
 			return
 		}
-		inFilePath = flag.Arg(0)
+		inPath = flag.Arg(0)
 	}
 
 	outFilePath = *outFileFlag
 	if outFilePath == "" {
 		if flag.Arg(1) == "" {
-			fn := strings.TrimSuffix(filepath.Base(inFilePath), filepath.Ext(inFilePath))
-			asmFn := fn + ".asm"
-			outFilePath = filepath.Join(filepath.Dir(inFilePath), asmFn)
+			info, erri := os.Stat(inPath)
+			if erri != nil {
+				err = fmt.Errorf("Illegal input path: %w", erri)
+				return
+			}
+			if info.IsDir() {
+				outFilePath = filepath.Join(inPath, filepath.Base(inPath)+".asm")
+			} else {
+				fn := strings.TrimSuffix(filepath.Base(inPath), filepath.Ext(inPath))
+				asmFn := fn + ".asm"
+				outFilePath = filepath.Join(filepath.Dir(inPath), asmFn)
+			}
 		} else {
 			outFilePath = flag.Arg(1)
 		}

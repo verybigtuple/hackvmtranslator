@@ -74,10 +74,6 @@ func (ah *asmBuilder) FromStack(dest string) {
 	ah.builder.WriteString("=M\n")
 }
 
-func (ah *asmBuilder) DecAddr() {
-	ah.builder.WriteString("A=A-1\n")
-}
-
 func (ah *asmBuilder) AsmCmds(cmds ...interface{}) {
 	for _, c := range cmds {
 		switch v := c.(type) {

@@ -162,15 +162,15 @@ func (cw *CodeWriter) writePop(cmd Command) error {
 func (cw *CodeWriter) writeAritmBinary(cmd Command) error {
 	cw.asm.AddComment(cmd.Arg1)
 	cw.asm.FromStack("D")
-	cw.asm.DecAddr()
+	cw.asm.AsmCmds("A=A-1")
 	switch cmd.Arg1 {
-	case "add":
+	case addKey:
 		cw.asm.AsmCmds("M=D+M")
-	case "sub":
+	case subKey:
 		cw.asm.AsmCmds("M=M-D")
-	case "and":
+	case andKey:
 		cw.asm.AsmCmds("M=D&M")
-	case "or":
+	case orKey:
 		cw.asm.AsmCmds("M=D|M")
 	}
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())

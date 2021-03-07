@@ -74,6 +74,7 @@ func (cw *CodeWriter) WriteBootstrap() (err error) {
 	cw.asm.ArbitraryCmd("M=D")
 	// Call Sys.init function
 	cw.writeCallCmd(Command{cmdCall, "Sys.init", 0})
+	cw.asm.ArbitraryCmd("D=0")
 
 	_, err = cw.writer.WriteString(cw.asm.CodeAsm())
 	return
@@ -288,7 +289,16 @@ func (cw *CodeWriter) writeCallCmd(cmd Command) error {
 func (cw *CodeWriter) writeReturnCmd(cmd Command) error {
 	cw.asm.AddComment("return")
 
+	cw.asm.ArbitraryCmd("@5")
+	cw.asm.ArbitraryCmd("D=A")
+	cw.asm.ArbitraryCmd("@LCL")
+	cw.asm.ArbitraryCmd("A=M-D")
+	cw.asm.ArbitraryCmd("D=M")
+	cw.asm.ArbitraryCmd("@R14")
+	cw.asm.ArbitraryCmd("M=D")
+
 	cw.asm.FromStackToD()
+
 	cw.asm.ArbitraryCmd("@ARG")
 	cw.asm.ArbitraryCmd("A=M")
 	cw.asm.ArbitraryCmd("M=D") //  *ARG = Pop()
@@ -298,7 +308,7 @@ func (cw *CodeWriter) writeReturnCmd(cmd Command) error {
 	cw.asm.ArbitraryCmd("@SP")
 	cw.asm.ArbitraryCmd("M=D") // Recycle stack
 
-	segm := [...]string{"@THAT", "@THIS", "@ARG"}
+	segm := [...]string{"@THAT", "@THIS", "@ARG", "@LCL"}
 	for _, s := range segm {
 		cw.asm.ArbitraryCmd("@LCL")   // EndFrame = LCL
 		cw.asm.ArbitraryCmd("AM=M-1") // A = Endframe-1, LCL = Endframe-1
@@ -306,20 +316,6 @@ func (cw *CodeWriter) writeReturnCmd(cmd Command) error {
 		cw.asm.ArbitraryCmd(s)
 		cw.asm.ArbitraryCmd("M=D")
 	}
-
-	// Before changing *LCL, we should get *(Endframe-5)
-	cw.asm.ArbitraryCmd("@LCL")
-	cw.asm.ArbitraryCmd("A=M-1") // A = EndFrame - 4
-	cw.asm.ArbitraryCmd("A=A-1") // A = EndFrame - 5
-	cw.asm.ArbitraryCmd("D=M")   // D = *(EndFrame - 5)
-	cw.asm.ArbitraryCmd("@R14")
-	cw.asm.ArbitraryCmd("M=D") // RetrAddr = R14 = *(EndFrame - 5)
-
-	cw.asm.ArbitraryCmd("@LCL")   // EndFrame = LCL
-	cw.asm.ArbitraryCmd("AM=M-1") // A = Endframe-1, LCL = Endframe-1
-	cw.asm.ArbitraryCmd("D=M")    // D = *(Endframe-1)
-	cw.asm.ArbitraryCmd("@LCL")
-	cw.asm.ArbitraryCmd("M=D")
 
 	cw.asm.ArbitraryCmd("@R14")
 	cw.asm.ArbitraryCmd("A=M")

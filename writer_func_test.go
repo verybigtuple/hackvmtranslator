@@ -110,6 +110,18 @@ func TestFuncReturn(t *testing.T) {
 	want := []string{
 		"// return",
 
+		// Save return address to R14
+		// We cannot do it later, Since if function is called with zero arguments,
+		// ARG will point to the same RAM address where ReturnAddress contains.
+		// In this case *ARG = Pop() will erase return address with return value
+		"@5",
+		"D=A",
+		"@LCL",
+		"A=M-D",
+		"D=M",
+		"@R14",
+		"M=D",
+
 		// *ARG = Pop()
 		"@SP",
 		"AM=M-1",
@@ -142,14 +154,6 @@ func TestFuncReturn(t *testing.T) {
 		"D=M",    // D = *(Endframe-3)
 		"@ARG",
 		"M=D",
-
-		// Before changing *LCL, we should get *(Endframe-5)
-		"@LCL",
-		"A=M-1", // A = EndFrame - 4
-		"A=A-1", // A = EndFrame - 5
-		"D=M",   // D = *(EndFrame - 5)
-		"@R14",
-		"M=D", // RetrAddr = R14 = *(EndFrame - 5)
 
 		"@LCL",
 		"AM=M-1", // A = Endframe-4, LCL = Endframe-4

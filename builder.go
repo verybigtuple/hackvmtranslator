@@ -65,17 +65,18 @@ func (ah *asmBuilder) ToStack(calc string) {
 	ah.builder.WriteString("M=" + calc + "\n")
 }
 
-// FromStackToD adds asm code which move SP pointer and pop value from the stack to the D-Register
-func (ah *asmBuilder) FromStackToD() {
-	ah.builder.WriteString("@SP\n")
-	ah.builder.WriteString("AM=M-1\n")
-	ah.builder.WriteString("D=M\n")
+// FromStack adds asm code which move SP pointer and pop value from the stack to the D-Register
+func (ah *asmBuilder) FromStack(dest string) {
+	ah.AsmCmds(SP, "AM=M-1")
+	ah.builder.WriteString(dest)
+	ah.builder.WriteString("=M\n")
 }
 
 func (ah *asmBuilder) SetTopStack(calc string) {
-	ah.builder.WriteString("@SP\n")
-	ah.builder.WriteString("A=M-1\n")
-	ah.builder.WriteString("M=" + calc + "\n")
+	ah.AsmCmds(SP, "A=M-1")
+	ah.builder.WriteString("M=")
+	ah.builder.WriteString(calc)
+	ah.builder.WriteRune('\n')
 }
 
 func (ah *asmBuilder) DecAddr() {

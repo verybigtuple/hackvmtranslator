@@ -108,22 +108,22 @@ func (cw *CodeWriter) writePop(cmd Command) error {
 
 	switch {
 	case isStaticSegment(cmd.Arg1):
-		cw.asm.FromStackToD()
+		cw.asm.FromStack("D")
 		cw.asm.StaticFromD(cw.stPrefix, cmd.Arg2)
 	case isTempSegment(cmd.Arg1):
-		cw.asm.FromStackToD()
+		cw.asm.FromStack("D")
 		cw.asm.TempFromD(cmd.Arg2)
 	case isPointerSegment(cmd.Arg1):
-		cw.asm.FromStackToD()
+		cw.asm.FromStack("D")
 		cw.asm.PointerFromD(cmd.Arg2)
 	default:
 		if cmd.Arg2 <= 7 {
-			cw.asm.FromStackToD()
+			cw.asm.FromStack("D")
 			cw.asm.SegmAddr(cmd.Arg1, cmd.Arg2)
 		} else {
 			cw.asm.SegmAddrCalcWithD(cmd.Arg1, cmd.Arg2, "D")
 			cw.asm.ToR("D")
-			cw.asm.FromStackToD()
+			cw.asm.FromStack("D")
 			cw.asm.FromR("A")
 		}
 		cw.asm.FromDtoMem()
@@ -135,7 +135,7 @@ func (cw *CodeWriter) writePop(cmd Command) error {
 
 func (cw *CodeWriter) writeAritmBinary(cmd Command) error {
 	cw.asm.AddComment(cmd.Arg1)
-	cw.asm.FromStackToD()
+	cw.asm.FromStack("D")
 	cw.asm.DecAddr()
 	switch cmd.Arg1 {
 	case "add":
@@ -165,7 +165,7 @@ func (cw *CodeWriter) writeArithmUnary(cmd Command) error {
 
 func (cw *CodeWriter) writeArithmCond(cmd Command) error {
 	cw.asm.AddComment(cmd.Arg1)
-	cw.asm.FromStackToD()
+	cw.asm.FromStack("D")
 	cw.asm.CondFalseDefault()
 	switch cmd.Arg1 {
 	case "eq":
@@ -200,7 +200,7 @@ func (cw *CodeWriter) writeLabelCmd(cmd Command) error {
 
 func (cw *CodeWriter) writeIfGotoCmd(cmd Command) error {
 	cw.asm.AddComment("if-goto " + cmd.Arg1)
-	cw.asm.FromStackToD()
+	cw.asm.FromStack("D")
 	cw.asm.AtFuncLabel(cw.fnPrefix, cmd.Arg1)
 	cw.asm.AsmCmds("D;JNE")
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
@@ -268,7 +268,7 @@ func (cw *CodeWriter) writeReturnCmd(cmd Command) error {
 	// Save return address. R14 = *(EndFrame - 5)
 	cw.asm.AsmCmds(5, "D=A", LCL, "A=M-D", "D=M", "@R14", "M=D")
 	// Move return value to arg. *ARG = Pop()
-	cw.asm.FromStackToD()
+	cw.asm.FromStack("D")
 	cw.asm.AsmCmds(ARG, "A=M", "M=D")
 	// Recycle stack: SP = ARG + 1
 	cw.asm.AsmCmds(ARG, "D=M+1", SP, "M=D")

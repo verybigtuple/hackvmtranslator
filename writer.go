@@ -71,9 +71,8 @@ func (cw *CodeWriter) WriteBootstrap() (err error) {
 	cw.asm.ArbitraryCmd("D=A")
 	cw.asm.ArbitraryCmd("@SP")
 	cw.asm.ArbitraryCmd("M=D")
-	// Go to Sys.init function
-	cw.asm.AtLabel("Sys.init")
-	cw.asm.ArbitraryCmd("0;JMP")
+	// Call Sys.init function
+	cw.writeCallCmd(Command{cmdCall, "Sys.init", 0})
 
 	_, err = cw.writer.WriteString(cw.asm.CodeAsm())
 	return

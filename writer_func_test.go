@@ -77,7 +77,7 @@ func TestFuncCall(t *testing.T) {
 		"AM=M+1",
 		"M=D",
 
-		"@THAT", // Push that to stack
+		"@THAT", // Push that to stack and restore SP to the normal position
 		"D=M",
 		"@SP",
 		"M=M+1",

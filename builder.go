@@ -7,9 +7,17 @@ import (
 	"strings"
 )
 
+type SegmInstr string
+
 const (
 	tempBaseAddr = 5 // Base address for temp vars
 	freeReg      = "@R13"
+
+	SP   SegmInstr = "SP"
+	LCL  SegmInstr = "LCL"
+	ARG  SegmInstr = "ARG"
+	THIS SegmInstr = "THIS"
+	THAT SegmInstr = "THAT"
 )
 
 // Assign segments to assembler A-Instructions
@@ -76,6 +84,25 @@ func (ah *asmBuilder) DecAddr() {
 
 func (ah *asmBuilder) ArbitraryCmd(cmd string) {
 	ah.builder.WriteString(cmd + "\n")
+}
+
+func (ah *asmBuilder) AsmCmds(cmds ...interface{}) {
+	for _, c := range cmds {
+		switch v := c.(type) {
+		case int:
+			s := strconv.Itoa(v)
+			ah.builder.WriteRune('@')
+			ah.builder.WriteString(s)
+			ah.builder.WriteRune('\n')
+		case SegmInstr:
+			ah.builder.WriteRune('@')
+			ah.builder.WriteString(string(v))
+			ah.builder.WriteRune('\n')
+		case string:
+			ah.builder.WriteString(v)
+			ah.builder.WriteRune('\n')
+		}
+	}
 }
 
 func (ah *asmBuilder) CondFalseDefault() {

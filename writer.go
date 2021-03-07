@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"strconv"
 )
 
 // CodeWriter is a struc that writes instructions to a user's writer
@@ -215,23 +214,21 @@ func (cw *CodeWriter) writeFunctionCmd(cmd Command) error {
 
 	cw.asm.AddComment(fmt.Sprintf("function %s %d", cmd.Arg1, cmd.Arg2))
 	cw.asm.SetLabel(cmd.Arg1)
+
+	// If function has just one local var, then just push one zero to the stack
 	if cmd.Arg2 == 1 {
 		cw.asm.ToStack("0")
 	}
+	// If function has has 2 and more vars, then we can slightly oprimized initialization
 	if cmd.Arg2 > 1 {
-		// Init first local var to stack w/o moving SP
-		cw.asm.ArbitraryCmd("@SP")
-		cw.asm.ArbitraryCmd("A=M")
-		cw.asm.ArbitraryCmd("M=0")
-		// the rest of vars
+		// Init first local var to stack w/o moving SP pointer forward
+		cw.asm.AsmCmds(SP, "A=M", "M=0")
+		// Init the the rest of vars
 		for i := 0; i < cmd.Arg2-1; i++ {
-			cw.asm.ArbitraryCmd("A=A+1")
-			cw.asm.ArbitraryCmd("M=0")
+			cw.asm.AsmCmds("A=A+1", "M=0")
 		}
-		// Set right position in SP
-		cw.asm.ArbitraryCmd("D=A+1")
-		cw.asm.ArbitraryCmd("@SP")
-		cw.asm.ArbitraryCmd("M=D")
+		// Restore the right position in SP
+		cw.asm.AsmCmds("D=A+1", "@SP", "M=D")
 	}
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err
@@ -239,47 +236,29 @@ func (cw *CodeWriter) writeFunctionCmd(cmd Command) error {
 
 func (cw *CodeWriter) writeCallCmd(cmd Command) error {
 	cw.asm.AddComment(fmt.Sprintf("call %s %d", cmd.Arg1, cmd.Arg2))
+
 	label := fmt.Sprintf("%s.CALL_RET_%d", cw.stPrefix, cw.callCount)
 	cw.callCount++
+
+	// Add redturnAddr to stack but do not move SP Pointer
 	cw.asm.AtLabel(label)
-	cw.asm.ArbitraryCmd("D=A")
-	cw.asm.ArbitraryCmd("@SP")
-	cw.asm.ArbitraryCmd("A=M")
-	cw.asm.ArbitraryCmd("M=D")
-
-	segm := [...]string{"@LCL", "@ARG", "@THIS"}
+	cw.asm.AsmCmds("D=A", SP, "A=M", "M=D")
+	// Save all segments to the stack except for THAT (the last one)
+	segm := [...]SegmInstr{LCL, ARG, THIS}
 	for _, s := range segm {
-		cw.asm.ArbitraryCmd(s)
-		cw.asm.ArbitraryCmd("D=M")
-		cw.asm.ArbitraryCmd("@SP")
-		cw.asm.ArbitraryCmd("AM=M+1")
-		cw.asm.ArbitraryCmd("M=D")
+		cw.asm.AsmCmds(s, "D=M", SP, "AM=M+1", "M=D")
 	}
-
-	cw.asm.ArbitraryCmd("@THAT")
-	cw.asm.ArbitraryCmd("D=M")
-	cw.asm.ArbitraryCmd("@SP")
-	cw.asm.ArbitraryCmd("M=M+1")
-	cw.asm.ArbitraryCmd("M=M+1")
-	cw.asm.ArbitraryCmd("A=M-1")
-	cw.asm.ArbitraryCmd("M=D")
-
+	// Save THAT to the stack and set SP Pointer to the normal value (empty stack register)
+	cw.asm.AsmCmds(THAT, "D=M", SP, "M=M+1", "M=M+1", "A=M-1", "M=D")
+	// Calc new ARG value - it is ARG = SP-5-<func args>
 	offset := 5 + cmd.Arg2
-	cw.asm.ArbitraryCmd("@" + strconv.Itoa(offset))
-	cw.asm.ArbitraryCmd("D=A")
-	cw.asm.ArbitraryCmd("@SP")
-	cw.asm.ArbitraryCmd("D=M-D")
-	cw.asm.ArbitraryCmd("@ARG")
-	cw.asm.ArbitraryCmd("M=D")
-
-	cw.asm.ArbitraryCmd("@SP") // LCL = SP
-	cw.asm.ArbitraryCmd("D=M")
-	cw.asm.ArbitraryCmd("@LCL")
-	cw.asm.ArbitraryCmd("M=D")
-
+	cw.asm.AsmCmds(offset, "D=A", SP, "D=M-D", ARG, "M=D")
+	// Set new LCL value: LCL=SP
+	cw.asm.AsmCmds(SP, "D=M", LCL, "M=D")
+	// Jump to called function
 	cw.asm.AtLabel(cmd.Arg1)
-	cw.asm.ArbitraryCmd("0;JMP")
-
+	cw.asm.AsmCmds("0;JMP")
+	// Label of return address
 	cw.asm.SetLabel(label)
 
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
@@ -288,38 +267,20 @@ func (cw *CodeWriter) writeCallCmd(cmd Command) error {
 
 func (cw *CodeWriter) writeReturnCmd(cmd Command) error {
 	cw.asm.AddComment("return")
-
-	cw.asm.ArbitraryCmd("@5")
-	cw.asm.ArbitraryCmd("D=A")
-	cw.asm.ArbitraryCmd("@LCL")
-	cw.asm.ArbitraryCmd("A=M-D")
-	cw.asm.ArbitraryCmd("D=M")
-	cw.asm.ArbitraryCmd("@R14")
-	cw.asm.ArbitraryCmd("M=D")
-
+	// Save return address. R14 = *(EndFrame - 5)
+	cw.asm.AsmCmds(5, "D=A", LCL, "A=M-D", "D=M", "@R14", "M=D")
+	// Move return value to arg. *ARG = Pop()
 	cw.asm.FromStackToD()
-
-	cw.asm.ArbitraryCmd("@ARG")
-	cw.asm.ArbitraryCmd("A=M")
-	cw.asm.ArbitraryCmd("M=D") //  *ARG = Pop()
-
-	cw.asm.ArbitraryCmd("@ARG")
-	cw.asm.ArbitraryCmd("D=M+1")
-	cw.asm.ArbitraryCmd("@SP")
-	cw.asm.ArbitraryCmd("M=D") // Recycle stack
-
-	segm := [...]string{"@THAT", "@THIS", "@ARG", "@LCL"}
+	cw.asm.AsmCmds(ARG, "A=M", "M=D")
+	// Recycle stack: SP = ARG + 1
+	cw.asm.AsmCmds(ARG, "D=M+1", SP, "M=D")
+	// Restore all func segments from the old stack
+	segm := [...]SegmInstr{THAT, THIS, ARG, LCL}
 	for _, s := range segm {
-		cw.asm.ArbitraryCmd("@LCL")   // EndFrame = LCL
-		cw.asm.ArbitraryCmd("AM=M-1") // A = Endframe-1, LCL = Endframe-1
-		cw.asm.ArbitraryCmd("D=M")    // D = *(Endframe-1)
-		cw.asm.ArbitraryCmd(s)
-		cw.asm.ArbitraryCmd("M=D")
+		cw.asm.AsmCmds(LCL, "AM=M-1", "D=M", s, "M=D")
 	}
-
-	cw.asm.ArbitraryCmd("@R14")
-	cw.asm.ArbitraryCmd("A=M")
-	cw.asm.ArbitraryCmd("0;JMP")
+	// Jump to return address
+	cw.asm.AsmCmds("@R14", "A=M", "0;JMP")
 
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err

@@ -1,4 +1,4 @@
-package main
+package parser
 
 import (
 	"bufio"
@@ -11,53 +11,53 @@ import (
 // CommandType is a type of a parser command
 type CommandType int
 
+// All command types of VM language
 const (
-	// Command Types
-	cmdArithmeticBinary CommandType = iota
-	cmdArithmeticUnary
-	cmdArithmeticCond
-	cmdPush
-	cmdPop
-	cmdLabel
-	cmdGoto
-	cmdIfGoto
-	cmdFunction
-	cmdCall
-	cmdReturn
+	CmdArithmeticBinary CommandType = iota
+	CmdArithmeticUnary
+	CmdArithmeticCond
+	CmdPush
+	CmdPop
+	CmdLabel
+	CmdGoto
+	CmdIfGoto
+	CmdFunction
+	CmdCall
+	CmdReturn
 )
 
 var cmdTypes = map[string]CommandType{
-	pushKey:   cmdPush,
-	popKey:    cmdPop,
-	addKey:    cmdArithmeticBinary,
-	subKey:    cmdArithmeticBinary,
-	andKey:    cmdArithmeticBinary,
-	orKey:     cmdArithmeticBinary,
-	negKey:    cmdArithmeticUnary,
-	notKey:    cmdArithmeticUnary,
-	eqKey:     cmdArithmeticCond,
-	gtKey:     cmdArithmeticCond,
-	ltKey:     cmdArithmeticCond,
-	labelKey:  cmdLabel,
-	gotoKey:   cmdGoto,
-	ifgotoKey: cmdIfGoto,
-	funcKey:   cmdFunction,
-	callKey:   cmdCall,
-	returnKey: cmdReturn,
+	PushKey:   CmdPush,
+	PopKey:    CmdPop,
+	AddKey:    CmdArithmeticBinary,
+	SubKey:    CmdArithmeticBinary,
+	AndKey:    CmdArithmeticBinary,
+	OrKey:     CmdArithmeticBinary,
+	NegKey:    CmdArithmeticUnary,
+	NotKey:    CmdArithmeticUnary,
+	EqKey:     CmdArithmeticCond,
+	GtKey:     CmdArithmeticCond,
+	LtKey:     CmdArithmeticCond,
+	LabelKey:  CmdLabel,
+	GotoKey:   CmdGoto,
+	IfgotoKey: CmdIfGoto,
+	FuncKey:   CmdFunction,
+	CallKey:   CmdCall,
+	ReturnKey: CmdReturn,
 }
 
 var cmdConverters = map[CommandType]func(CommandType, []string) (*Command, error){
-	cmdPush:             convertPushPop,
-	cmdPop:              convertPushPop,
-	cmdArithmeticBinary: convertArithmetic,
-	cmdArithmeticUnary:  convertArithmetic,
-	cmdArithmeticCond:   convertArithmetic,
-	cmdLabel:            conevrtLabeled,
-	cmdGoto:             conevrtLabeled,
-	cmdIfGoto:           conevrtLabeled,
-	cmdFunction:         convertFunc,
-	cmdCall:             convertFunc,
-	cmdReturn:           convertReturn,
+	CmdPush:             convertPushPop,
+	CmdPop:              convertPushPop,
+	CmdArithmeticBinary: convertArithmetic,
+	CmdArithmeticUnary:  convertArithmetic,
+	CmdArithmeticCond:   convertArithmetic,
+	CmdLabel:            conevrtLabeled,
+	CmdGoto:             conevrtLabeled,
+	CmdIfGoto:           conevrtLabeled,
+	CmdFunction:         convertFunc,
+	CmdCall:             convertFunc,
+	CmdReturn:           convertReturn,
 }
 
 func checkNullArgs(words []string) (err error) {
@@ -90,7 +90,7 @@ func convertPushPop(ct CommandType, words []string) (*Command, error) {
 	if err != nil {
 		return nil, err
 	}
-	if !(ct == cmdPush && isValidPushSegment(segment)) && !isValidPopSegment(segment) {
+	if !(ct == CmdPush && isValidPushSegment(segment)) && !isValidPopSegment(segment) {
 		return nil, fmt.Errorf("Invalid segment %s for %s command", segment, words[0])
 	}
 	if offset < 0 {
@@ -201,7 +201,7 @@ func (p *Parser) readNextCodeLine() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		if !strings.HasPrefix(line, commentPrefix) && len(line) > 0 {
+		if !strings.HasPrefix(line, CommentPrefix) && len(line) > 0 {
 			return line, nil
 		}
 	}

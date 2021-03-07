@@ -1,9 +1,13 @@
-package main
+package codewriter
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/verybigtuple/hackvmtranslator/parser"
+)
 
 func TestWriterGoto(t *testing.T) {
-	testLine := Command{CmdType: cmdGoto, Arg1: "label1"}
+	testLine := parser.Command{CmdType: parser.CmdGoto, Arg1: "label1"}
 	want := []string{
 		"// goto label1",
 		"@func$label1",
@@ -13,7 +17,7 @@ func TestWriterGoto(t *testing.T) {
 }
 
 func TestWriterLablel(t *testing.T) {
-	testLine := Command{CmdType: cmdLabel, Arg1: "label1"}
+	testLine := parser.Command{CmdType: parser.CmdLabel, Arg1: "label1"}
 	want := []string{
 		"// label label1",
 		"(func$label1)",
@@ -22,7 +26,7 @@ func TestWriterLablel(t *testing.T) {
 }
 
 func TestWriterIfGoto(t *testing.T) {
-	testLine := Command{CmdType: cmdIfGoto, Arg1: "label1"}
+	testLine := parser.Command{CmdType: parser.CmdIfGoto, Arg1: "label1"}
 	want := []string{
 		"// if-goto label1",
 		"@SP",

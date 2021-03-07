@@ -1,37 +1,39 @@
-package main
+package codewriter
 
 import (
 	"bytes"
 	"strconv"
 	"strings"
+
+	"github.com/verybigtuple/hackvmtranslator/parser"
 )
 
-type SegmInstr string
+type segmInstr string
 type freeReg string
 
 const (
 	tempBaseAddr = 5 // Base address for temp vars
 
-	SP   SegmInstr = "SP"
-	LCL  SegmInstr = "LCL"
-	ARG  SegmInstr = "ARG"
-	THIS SegmInstr = "THIS"
-	THAT SegmInstr = "THAT"
+	sp   segmInstr = "SP"
+	lcl  segmInstr = "LCL"
+	arg  segmInstr = "ARG"
+	this segmInstr = "THIS"
+	that segmInstr = "THAT"
 
-	R13 freeReg = "R13"
-	R14 freeReg = "R14"
+	r13 freeReg = "R13"
+	r14 freeReg = "R14"
 )
 
-var varSegments = map[string]SegmInstr{
-	localKey:    LCL,
-	argumentKey: ARG,
-	thisKey:     THIS,
-	thatKey:     THAT,
+var varSegments = map[string]segmInstr{
+	parser.LocalKey:    lcl,
+	parser.ArgumentKey: arg,
+	parser.ThisKey:     this,
+	parser.ThatKey:     that,
 }
 
-var pointerOffsets = map[int]SegmInstr{
-	0: THIS,
-	1: THAT,
+var pointerOffsets = map[int]segmInstr{
+	0: this,
+	1: that,
 }
 
 type asmBuilder struct {
@@ -50,8 +52,8 @@ func (ah *asmBuilder) CodeAsm() string {
 }
 
 func (ah *asmBuilder) AddComment(comment string) {
-	if !strings.HasPrefix(comment, commentPrefix) {
-		ah.builder.WriteString(commentPrefix + " " + comment + "\n")
+	if !strings.HasPrefix(comment, parser.CommentPrefix) {
+		ah.builder.WriteString(parser.CommentPrefix + " " + comment + "\n")
 	} else {
 		ah.builder.WriteString(comment + "\n")
 	}
@@ -60,7 +62,7 @@ func (ah *asmBuilder) AddComment(comment string) {
 // ToStack adds asm code which move SP pointer and push the value of the D-register
 // to the stack
 func (ah *asmBuilder) ToStack(calc string) {
-	ah.AsmCmds(SP, "M=M+1", "A=M-1")
+	ah.AsmCmds(sp, "M=M+1", "A=M-1")
 	ah.builder.WriteString("M=")
 	ah.builder.WriteString(calc)
 	ah.builder.WriteRune('\n')
@@ -68,7 +70,7 @@ func (ah *asmBuilder) ToStack(calc string) {
 
 // FromStack adds asm code which move SP pointer and pop value from the stack to the D-Register
 func (ah *asmBuilder) FromStack(dest string) {
-	ah.AsmCmds(SP, "AM=M-1")
+	ah.AsmCmds(sp, "AM=M-1")
 	ah.builder.WriteString(dest)
 	ah.builder.WriteString("=M\n")
 }
@@ -85,7 +87,7 @@ func (ah *asmBuilder) AsmCmds(cmds ...interface{}) {
 			ah.builder.WriteRune('@')
 			ah.builder.WriteString(string(v))
 			ah.builder.WriteRune('\n')
-		case SegmInstr:
+		case segmInstr:
 			ah.builder.WriteRune('@')
 			ah.builder.WriteString(string(v))
 			ah.builder.WriteRune('\n')

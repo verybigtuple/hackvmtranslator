@@ -11,6 +11,9 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/verybigtuple/hackvmtranslator/codewriter"
+	"github.com/verybigtuple/hackvmtranslator/parser"
 )
 
 func parseCmdline() (inPath, outFilePath string, noBootstrap bool, err error) {
@@ -88,8 +91,8 @@ func getInputFiles(path string) ([]string, error) {
 }
 
 func run(writerName, stPrefix string, inReader *bufio.Reader, outWriter *bufio.Writer) error {
-	parser := NewParser(inReader)
-	codeWr := NewCodeWriter(outWriter, writerName, stPrefix, "")
+	parser := parser.NewParser(inReader)
+	codeWr := codewriter.NewCodeWriter(outWriter, writerName, stPrefix, "")
 	for {
 		cmd, err := parser.ParseNext()
 		if errors.Is(err, io.EOF) {
@@ -111,7 +114,7 @@ func processBootstrap(result chan<- *trResult, errChan chan<- error, wg *sync.Wa
 
 	sBuilder := &strings.Builder{}
 	outWriter := bufio.NewWriter(sBuilder)
-	bsCodeWriter := NewCodeWriterBootstrap(outWriter)
+	bsCodeWriter := codewriter.NewCodeWriterBootstrap(outWriter)
 	err := bsCodeWriter.WriteBootstrap()
 	if err != nil {
 		errChan <- err

@@ -1,4 +1,4 @@
-package main
+package parser
 
 import (
 	"bufio"
@@ -20,47 +20,47 @@ func TestParserRegular(t *testing.T) {
 	}{
 		{
 			line: "push constant 17",
-			want: Command{cmdPush, "constant", 17},
+			want: Command{CmdPush, "constant", 17},
 		},
 		{
 			line: "pop local 1",
-			want: Command{cmdPop, "local", 1},
+			want: Command{CmdPop, "local", 1},
 		},
 		{
 			line: "add",
-			want: Command{cmdArithmeticBinary, "add", 0},
+			want: Command{CmdArithmeticBinary, "add", 0},
 		},
 		{
 			line: "push local 100 // Comment for the command",
-			want: Command{cmdPush, "local", 100},
+			want: Command{CmdPush, "local", 100},
 		},
 		{
 			line: "eq",
-			want: Command{cmdArithmeticCond, "eq", 0},
+			want: Command{CmdArithmeticCond, "eq", 0},
 		},
 		{
 			line: "goto testLabel",
-			want: Command{cmdGoto, "testLabel", 0},
+			want: Command{CmdGoto, "testLabel", 0},
 		},
 		{
 			line: "label testLabel",
-			want: Command{cmdLabel, "testLabel", 0},
+			want: Command{CmdLabel, "testLabel", 0},
 		},
 		{
 			line: "if-goto testLabel",
-			want: Command{cmdIfGoto, "testLabel", 0},
+			want: Command{CmdIfGoto, "testLabel", 0},
 		},
 		{
 			line: "function Main.test 2",
-			want: Command{cmdFunction, "Main.test", 2},
+			want: Command{CmdFunction, "Main.test", 2},
 		},
 		{
 			line: "call Main.test 2",
-			want: Command{cmdCall, "Main.test", 2},
+			want: Command{CmdCall, "Main.test", 2},
 		},
 		{
 			line: "return",
-			want: Command{cmdReturn, "", 0},
+			want: Command{CmdReturn, "", 0},
 		},
 	}
 

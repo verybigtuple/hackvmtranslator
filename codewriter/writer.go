@@ -1,8 +1,10 @@
-package main
+package codewriter
 
 import (
 	"bufio"
 	"fmt"
+
+	"github.com/verybigtuple/hackvmtranslator/parser"
 )
 
 // CodeWriter is a struc that writes instructions to a user's writer
@@ -41,22 +43,22 @@ func NewCodeWriterBootstrap(w *bufio.Writer) *CodeWriter {
 	return NewCodeWriter(w, "Bootstrap", "", "")
 }
 
-var writers = map[CommandType]func(*CodeWriter, Command) (err error){
-	cmdPush:             (*CodeWriter).writePush,
-	cmdPop:              (*CodeWriter).writePop,
-	cmdArithmeticBinary: (*CodeWriter).writeAritmBinary,
-	cmdArithmeticUnary:  (*CodeWriter).writeArithmUnary,
-	cmdArithmeticCond:   (*CodeWriter).writeArithmCond,
-	cmdGoto:             (*CodeWriter).writeGotoCmd,
-	cmdLabel:            (*CodeWriter).writeLabelCmd,
-	cmdIfGoto:           (*CodeWriter).writeIfGotoCmd,
-	cmdFunction:         (*CodeWriter).writeFunctionCmd,
-	cmdCall:             (*CodeWriter).writeCallCmd,
-	cmdReturn:           (*CodeWriter).writeReturnCmd,
+var writers = map[parser.CommandType]func(*CodeWriter, parser.Command) (err error){
+	parser.CmdPush:             (*CodeWriter).writePush,
+	parser.CmdPop:              (*CodeWriter).writePop,
+	parser.CmdArithmeticBinary: (*CodeWriter).writeAritmBinary,
+	parser.CmdArithmeticUnary:  (*CodeWriter).writeArithmUnary,
+	parser.CmdArithmeticCond:   (*CodeWriter).writeArithmCond,
+	parser.CmdGoto:             (*CodeWriter).writeGotoCmd,
+	parser.CmdLabel:            (*CodeWriter).writeLabelCmd,
+	parser.CmdIfGoto:           (*CodeWriter).writeIfGotoCmd,
+	parser.CmdFunction:         (*CodeWriter).writeFunctionCmd,
+	parser.CmdCall:             (*CodeWriter).writeCallCmd,
+	parser.CmdReturn:           (*CodeWriter).writeReturnCmd,
 }
 
 // WriteCommand writes a command to a writer passed to NewCodeWriter
-func (cw *CodeWriter) WriteCommand(cmd Command) error {
+func (cw *CodeWriter) WriteCommand(cmd parser.Command) error {
 	if w, ok := writers[cmd.CmdType]; ok {
 		return w(cw, cmd)
 	}
@@ -65,9 +67,9 @@ func (cw *CodeWriter) WriteCommand(cmd Command) error {
 
 func (cw *CodeWriter) WriteBootstrap() (err error) {
 	// Init SP
-	cw.asm.AsmCmds(256, "D=A", SP, "M=D")
+	cw.asm.AsmCmds(256, "D=A", sp, "M=D")
 	// Call Sys.init function
-	cw.writeCallCmd(Command{cmdCall, "Sys.init", 0})
+	cw.writeCallCmd(parser.Command{parser.CmdCall, "Sys.init", 0})
 	// In order not to have 2 lablels in a row
 	cw.asm.AsmCmds("D=0")
 
@@ -75,20 +77,20 @@ func (cw *CodeWriter) WriteBootstrap() (err error) {
 	return
 }
 
-func (cw *CodeWriter) writePush(cmd Command) error {
+func (cw *CodeWriter) writePush(cmd parser.Command) error {
 	cw.asm.AddComment(fmt.Sprintf("push %s %d", cmd.Arg1, cmd.Arg2))
 
 	switch {
-	case isConstantSegment(cmd.Arg1): // push constant 2
+	case parser.IsConstantSegment(cmd.Arg1): // push constant 2
 		cw.asm.AsmCmds(cmd.Arg2, "D=A")
-	case isStaticSegment(cmd.Arg1): // push  static 2
+	case parser.IsStaticSegment(cmd.Arg1): // push  static 2
 		cw.asm.StaticAinstr(cw.stPrefix, cmd.Arg2)
 		cw.asm.AsmCmds("D=M")
-	case isTempSegment(cmd.Arg1): // push temp 2
+	case parser.IsTempSegment(cmd.Arg1): // push temp 2
 		//cw.asm.TempToD(cmd.Arg2)
 		cw.asm.TempAInstr(cmd.Arg2)
 		cw.asm.AsmCmds("D=M")
-	case isPointerSegment(cmd.Arg1):
+	case parser.IsPointerSegment(cmd.Arg1):
 		cw.asm.PointerAinstr(cmd.Arg2)
 		cw.asm.AsmCmds("D=M")
 	default: // push local, push argument or this/that
@@ -116,19 +118,19 @@ func (cw *CodeWriter) writePush(cmd Command) error {
 	return err
 }
 
-func (cw *CodeWriter) writePop(cmd Command) error {
+func (cw *CodeWriter) writePop(cmd parser.Command) error {
 	cw.asm.AddComment(fmt.Sprintf("pop %s %d", cmd.Arg1, cmd.Arg2))
 
 	switch {
-	case isStaticSegment(cmd.Arg1):
+	case parser.IsStaticSegment(cmd.Arg1):
 		cw.asm.FromStack("D")
 		cw.asm.StaticAinstr(cw.stPrefix, cmd.Arg2)
 		cw.asm.AsmCmds("M=D")
-	case isTempSegment(cmd.Arg1):
+	case parser.IsTempSegment(cmd.Arg1):
 		cw.asm.FromStack("D")
 		cw.asm.TempAInstr(cmd.Arg2)
 		cw.asm.AsmCmds("M=D")
-	case isPointerSegment(cmd.Arg1):
+	case parser.IsPointerSegment(cmd.Arg1):
 		cw.asm.FromStack("D")
 		cw.asm.PointerAinstr(cmd.Arg2)
 		cw.asm.AsmCmds("M=D")
@@ -147,9 +149,9 @@ func (cw *CodeWriter) writePop(cmd Command) error {
 		} else {
 			cw.asm.AsmCmds(cmd.Arg2, "D=A")
 			cw.asm.SegmentAinstr(cmd.Arg1)
-			cw.asm.AsmCmds("D=D+M", R13, "M=D")
+			cw.asm.AsmCmds("D=D+M", r13, "M=D")
 			cw.asm.FromStack("D")
-			cw.asm.AsmCmds(R13, "A=M")
+			cw.asm.AsmCmds(r13, "A=M")
 		}
 		cw.asm.AsmCmds("M=D")
 	}
@@ -157,40 +159,40 @@ func (cw *CodeWriter) writePop(cmd Command) error {
 	return err
 }
 
-func (cw *CodeWriter) writeAritmBinary(cmd Command) error {
+func (cw *CodeWriter) writeAritmBinary(cmd parser.Command) error {
 	cw.asm.AddComment(cmd.Arg1)
 	cw.asm.FromStack("D")
 	cw.asm.AsmCmds("A=A-1")
 	switch cmd.Arg1 {
-	case addKey:
+	case parser.AddKey:
 		cw.asm.AsmCmds("M=D+M")
-	case subKey:
+	case parser.SubKey:
 		cw.asm.AsmCmds("M=M-D")
-	case andKey:
+	case parser.AndKey:
 		cw.asm.AsmCmds("M=D&M")
-	case orKey:
+	case parser.OrKey:
 		cw.asm.AsmCmds("M=D|M")
 	}
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err
 }
 
-func (cw *CodeWriter) writeArithmUnary(cmd Command) error {
+func (cw *CodeWriter) writeArithmUnary(cmd parser.Command) error {
 	cw.asm.AddComment(cmd.Arg1)
 	// Get address for result (top of the stack)
-	cw.asm.AsmCmds(SP, "A=M-1")
+	cw.asm.AsmCmds(sp, "A=M-1")
 	// make calculation
 	switch cmd.Arg1 {
-	case negKey:
+	case parser.NegKey:
 		cw.asm.AsmCmds("M=-M")
-	case notKey:
+	case parser.NotKey:
 		cw.asm.AsmCmds("M=!M")
 	}
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err
 }
 
-func (cw *CodeWriter) writeArithmCond(cmd Command) error {
+func (cw *CodeWriter) writeArithmCond(cmd parser.Command) error {
 	cw.asm.AddComment(cmd.Arg1)
 	// Get boolean from stack to D-register
 	cw.asm.FromStack("D")
@@ -200,22 +202,22 @@ func (cw *CodeWriter) writeArithmCond(cmd Command) error {
 	cw.asm.AtArithmCondLabel(cw.stPrefix, cmd.Arg1, cw.arCondCount)
 
 	switch cmd.Arg1 {
-	case eqKey:
+	case parser.EqKey:
 		cw.asm.AsmCmds("D;JNE") // if D=M-D != 0 than jump to the end and leave M=false
-	case gtKey:
+	case parser.GtKey:
 		cw.asm.AsmCmds("D;JLE") // if D=M-D <=0 then jump to the end and leave M=false
-	case ltKey:
+	case parser.LtKey:
 		cw.asm.AsmCmds("D;JGE") // if D=M-D >= 0 then jump to the end and leave M=false
 	}
 	// Set true
-	cw.asm.AsmCmds(SP, "A=M-1", "M=-1")
+	cw.asm.AsmCmds(sp, "A=M-1", "M=-1")
 	cw.asm.SetArithmCondLabel(cw.stPrefix, cmd.Arg1, cw.arCondCount)
 	cw.arCondCount++
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err
 }
 
-func (cw *CodeWriter) writeGotoCmd(cmd Command) error {
+func (cw *CodeWriter) writeGotoCmd(cmd parser.Command) error {
 	cw.asm.AddComment("goto " + cmd.Arg1)
 	cw.asm.AtFuncLabel(cw.fnPrefix, cmd.Arg1)
 	cw.asm.AsmCmds("0;JMP")
@@ -223,14 +225,14 @@ func (cw *CodeWriter) writeGotoCmd(cmd Command) error {
 	return err
 }
 
-func (cw *CodeWriter) writeLabelCmd(cmd Command) error {
+func (cw *CodeWriter) writeLabelCmd(cmd parser.Command) error {
 	cw.asm.AddComment("label " + cmd.Arg1)
 	cw.asm.SetFuncLabel(cw.fnPrefix, cmd.Arg1)
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err
 }
 
-func (cw *CodeWriter) writeIfGotoCmd(cmd Command) error {
+func (cw *CodeWriter) writeIfGotoCmd(cmd parser.Command) error {
 	cw.asm.AddComment("if-goto " + cmd.Arg1)
 	cw.asm.FromStack("D")
 	cw.asm.AtFuncLabel(cw.fnPrefix, cmd.Arg1)
@@ -239,7 +241,7 @@ func (cw *CodeWriter) writeIfGotoCmd(cmd Command) error {
 	return err
 }
 
-func (cw *CodeWriter) writeFunctionCmd(cmd Command) error {
+func (cw *CodeWriter) writeFunctionCmd(cmd parser.Command) error {
 	cw.fnPrefix = cmd.Arg1
 
 	cw.asm.AddComment(fmt.Sprintf("function %s %d", cmd.Arg1, cmd.Arg2))
@@ -252,7 +254,7 @@ func (cw *CodeWriter) writeFunctionCmd(cmd Command) error {
 	// If function has has 2 and more vars, then we can slightly oprimized initialization
 	if cmd.Arg2 > 1 {
 		// Init first local var to stack w/o moving SP pointer forward
-		cw.asm.AsmCmds(SP, "A=M", "M=0")
+		cw.asm.AsmCmds(sp, "A=M", "M=0")
 		// Init the the rest of vars
 		for i := 0; i < cmd.Arg2-1; i++ {
 			cw.asm.AsmCmds("A=A+1", "M=0")
@@ -264,7 +266,7 @@ func (cw *CodeWriter) writeFunctionCmd(cmd Command) error {
 	return err
 }
 
-func (cw *CodeWriter) writeCallCmd(cmd Command) error {
+func (cw *CodeWriter) writeCallCmd(cmd parser.Command) error {
 	cw.asm.AddComment(fmt.Sprintf("call %s %d", cmd.Arg1, cmd.Arg2))
 
 	label := fmt.Sprintf("%s.CALL_RET_%d", cw.stPrefix, cw.callCount)
@@ -272,19 +274,19 @@ func (cw *CodeWriter) writeCallCmd(cmd Command) error {
 
 	// Add redturnAddr to stack but do not move SP Pointer
 	cw.asm.AtLabel(label)
-	cw.asm.AsmCmds("D=A", SP, "A=M", "M=D")
+	cw.asm.AsmCmds("D=A", sp, "A=M", "M=D")
 	// Save all segments to the stack except for THAT (the last one)
-	segm := [...]SegmInstr{LCL, ARG, THIS}
+	segm := [...]segmInstr{lcl, arg, this}
 	for _, s := range segm {
-		cw.asm.AsmCmds(s, "D=M", SP, "AM=M+1", "M=D")
+		cw.asm.AsmCmds(s, "D=M", sp, "AM=M+1", "M=D")
 	}
 	// Save THAT to the stack and set SP Pointer to the normal value (empty stack register)
-	cw.asm.AsmCmds(THAT, "D=M", SP, "M=M+1", "M=M+1", "A=M-1", "M=D")
+	cw.asm.AsmCmds(that, "D=M", sp, "M=M+1", "M=M+1", "A=M-1", "M=D")
 	// Calc new ARG value - it is ARG = SP-5-<func args>
 	offset := 5 + cmd.Arg2
-	cw.asm.AsmCmds(offset, "D=A", SP, "D=M-D", ARG, "M=D")
+	cw.asm.AsmCmds(offset, "D=A", sp, "D=M-D", arg, "M=D")
 	// Set new LCL value: LCL=SP
-	cw.asm.AsmCmds(SP, "D=M", LCL, "M=D")
+	cw.asm.AsmCmds(sp, "D=M", lcl, "M=D")
 	// Jump to called function
 	cw.asm.AtLabel(cmd.Arg1)
 	cw.asm.AsmCmds("0;JMP")
@@ -295,19 +297,19 @@ func (cw *CodeWriter) writeCallCmd(cmd Command) error {
 	return err
 }
 
-func (cw *CodeWriter) writeReturnCmd(cmd Command) error {
+func (cw *CodeWriter) writeReturnCmd(cmd parser.Command) error {
 	cw.asm.AddComment("return")
 	// Save return address. R14 = *(EndFrame - 5)
-	cw.asm.AsmCmds(5, "D=A", LCL, "A=M-D", "D=M", "@R14", "M=D")
+	cw.asm.AsmCmds(5, "D=A", lcl, "A=M-D", "D=M", "@R14", "M=D")
 	// Move return value to arg. *ARG = Pop()
 	cw.asm.FromStack("D")
-	cw.asm.AsmCmds(ARG, "A=M", "M=D")
+	cw.asm.AsmCmds(arg, "A=M", "M=D")
 	// Recycle stack: SP = ARG + 1
-	cw.asm.AsmCmds(ARG, "D=M+1", SP, "M=D")
+	cw.asm.AsmCmds(arg, "D=M+1", sp, "M=D")
 	// Restore all func segments from the old stack
-	segm := [...]SegmInstr{THAT, THIS, ARG, LCL}
+	segm := [...]segmInstr{that, this, arg, lcl}
 	for _, s := range segm {
-		cw.asm.AsmCmds(LCL, "AM=M-1", "D=M", s, "M=D")
+		cw.asm.AsmCmds(lcl, "AM=M-1", "D=M", s, "M=D")
 	}
 	// Jump to return address
 	cw.asm.AsmCmds("@R14", "A=M", "0;JMP")

@@ -1,9 +1,13 @@
-package main
+package codewriter
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/verybigtuple/hackvmtranslator/parser"
+)
 
 func TestWriterAdd(t *testing.T) {
-	testLine := Command{CmdType: cmdArithmeticBinary, Arg1: "add"}
+	testLine := parser.Command{CmdType: parser.CmdArithmeticBinary, Arg1: "add"}
 	want := []string{
 		"// add",
 		"@SP",
@@ -17,7 +21,7 @@ func TestWriterAdd(t *testing.T) {
 }
 
 func TestWriterSub(t *testing.T) {
-	testLine := Command{CmdType: cmdArithmeticBinary, Arg1: "sub"}
+	testLine := parser.Command{CmdType: parser.CmdArithmeticBinary, Arg1: "sub"}
 	want := []string{
 		"// sub",
 		"@SP",
@@ -31,7 +35,7 @@ func TestWriterSub(t *testing.T) {
 }
 
 func TestWriterNeg(t *testing.T) {
-	testLine := Command{CmdType: cmdArithmeticUnary, Arg1: "neg"}
+	testLine := parser.Command{CmdType: parser.CmdArithmeticUnary, Arg1: "neg"}
 	want := []string{
 		"// neg",
 		"@SP",
@@ -42,7 +46,7 @@ func TestWriterNeg(t *testing.T) {
 }
 
 func TestWriterEq(t *testing.T) {
-	testLine := Command{CmdType: cmdArithmeticCond, Arg1: "eq"}
+	testLine := parser.Command{CmdType: parser.CmdArithmeticCond, Arg1: "eq"}
 	want := []string{
 		"// eq",
 		"@SP",
@@ -65,7 +69,7 @@ func TestWriterEq(t *testing.T) {
 }
 
 func TestWriterGt(t *testing.T) {
-	testLine := Command{CmdType: cmdArithmeticCond, Arg1: "gt"}
+	testLine := parser.Command{CmdType: parser.CmdArithmeticCond, Arg1: "gt"}
 	want := []string{
 		"// gt",
 		"@SP",
@@ -88,7 +92,7 @@ func TestWriterGt(t *testing.T) {
 }
 
 func TestWriterLt(t *testing.T) {
-	testLine := Command{CmdType: cmdArithmeticCond, Arg1: "lt"}
+	testLine := parser.Command{CmdType: parser.CmdArithmeticCond, Arg1: "lt"}
 	want := []string{
 		"// lt",
 		"@SP",
@@ -111,7 +115,7 @@ func TestWriterLt(t *testing.T) {
 }
 
 func TestWriterAnd(t *testing.T) {
-	testLine := Command{CmdType: cmdArithmeticBinary, Arg1: "and"}
+	testLine := parser.Command{CmdType: parser.CmdArithmeticBinary, Arg1: "and"}
 	want := []string{
 		"// and",
 		"@SP",
@@ -125,7 +129,7 @@ func TestWriterAnd(t *testing.T) {
 }
 
 func TestWriterOr(t *testing.T) {
-	testLine := Command{CmdType: cmdArithmeticBinary, Arg1: "or"}
+	testLine := parser.Command{CmdType: parser.CmdArithmeticBinary, Arg1: "or"}
 	want := []string{
 		"// or",
 		"@SP",
@@ -139,7 +143,7 @@ func TestWriterOr(t *testing.T) {
 }
 
 func TestWriterNot(t *testing.T) {
-	testLine := Command{CmdType: cmdArithmeticUnary, Arg1: "not"}
+	testLine := parser.Command{CmdType: parser.CmdArithmeticUnary, Arg1: "not"}
 	want := []string{
 		"// not",
 		"@SP",

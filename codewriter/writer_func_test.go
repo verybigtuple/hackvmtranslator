@@ -1,11 +1,13 @@
-package main
+package codewriter
 
 import (
 	"testing"
+
+	"github.com/verybigtuple/hackvmtranslator/parser"
 )
 
 func TestFuncFunction0(t *testing.T) {
-	testLine := Command{CmdType: cmdFunction, Arg1: "Test.func", Arg2: 0}
+	testLine := parser.Command{CmdType: parser.CmdFunction, Arg1: "Test.func", Arg2: 0}
 	want := []string{
 		"// function Test.func 0",
 		"(Test.func)", // Push return address to stack
@@ -14,7 +16,7 @@ func TestFuncFunction0(t *testing.T) {
 }
 
 func TestFuncFunction1(t *testing.T) {
-	testLine := Command{CmdType: cmdFunction, Arg1: "Test.func", Arg2: 1}
+	testLine := parser.Command{CmdType: parser.CmdFunction, Arg1: "Test.func", Arg2: 1}
 	want := []string{
 		"// function Test.func 1",
 		"(Test.func)", // Push return address to stack
@@ -27,7 +29,7 @@ func TestFuncFunction1(t *testing.T) {
 }
 
 func TestFuncFunctionMore(t *testing.T) {
-	testLine := Command{CmdType: cmdFunction, Arg1: "Test.func", Arg2: 5}
+	testLine := parser.Command{CmdType: parser.CmdFunction, Arg1: "Test.func", Arg2: 5}
 	want := []string{
 		"// function Test.func 5",
 		"(Test.func)", // Push return address to stack
@@ -50,7 +52,7 @@ func TestFuncFunctionMore(t *testing.T) {
 }
 
 func TestFuncCall(t *testing.T) {
-	testLine := Command{CmdType: cmdCall, Arg1: "Test.func", Arg2: 2}
+	testLine := parser.Command{CmdType: parser.CmdCall, Arg1: "Test.func", Arg2: 2}
 	want := []string{
 		"// call Test.func 2",
 		"@test.CALL_RET_0", // Push return address to stack
@@ -106,7 +108,7 @@ func TestFuncCall(t *testing.T) {
 }
 
 func TestFuncReturn(t *testing.T) {
-	testLine := Command{CmdType: cmdReturn}
+	testLine := parser.Command{CmdType: parser.CmdReturn}
 	want := []string{
 		"// return",
 

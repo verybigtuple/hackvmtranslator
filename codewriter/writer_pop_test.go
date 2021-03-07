@@ -1,9 +1,13 @@
-package main
+package codewriter
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/verybigtuple/hackvmtranslator/parser"
+)
 
 func TestWriterPopStatic(t *testing.T) {
-	testLine := Command{CmdType: cmdPop, Arg1: "static", Arg2: 5}
+	testLine := parser.Command{CmdType: parser.CmdPop, Arg1: "static", Arg2: 5}
 	want := []string{
 		"// pop static 5",
 		"@SP",
@@ -16,7 +20,7 @@ func TestWriterPopStatic(t *testing.T) {
 }
 
 func TestWriterPopLocalZero(t *testing.T) {
-	testLine := Command{CmdType: cmdPop, Arg1: "local", Arg2: 0}
+	testLine := parser.Command{CmdType: parser.CmdPop, Arg1: "local", Arg2: 0}
 	want := []string{
 		"// pop local 0",
 		"@SP",
@@ -30,7 +34,7 @@ func TestWriterPopLocalZero(t *testing.T) {
 }
 
 func TestWriterPopLocalOne(t *testing.T) {
-	testLine := Command{CmdType: cmdPop, Arg1: "local", Arg2: 1}
+	testLine := parser.Command{CmdType: parser.CmdPop, Arg1: "local", Arg2: 1}
 	want := []string{
 		"// pop local 1",
 		"@SP",
@@ -44,7 +48,7 @@ func TestWriterPopLocalOne(t *testing.T) {
 }
 
 func TestWriterPopLocalTwo(t *testing.T) {
-	testLine := Command{CmdType: cmdPop, Arg1: "local", Arg2: 2}
+	testLine := parser.Command{CmdType: parser.CmdPop, Arg1: "local", Arg2: 2}
 	want := []string{
 		"// pop local 2",
 		"@SP",
@@ -59,7 +63,7 @@ func TestWriterPopLocalTwo(t *testing.T) {
 }
 
 func TestWriterPopLocalThree(t *testing.T) {
-	testLine := Command{CmdType: cmdPop, Arg1: "local", Arg2: 3}
+	testLine := parser.Command{CmdType: parser.CmdPop, Arg1: "local", Arg2: 3}
 	want := []string{
 		"// pop local 3",
 		"@SP",
@@ -76,7 +80,7 @@ func TestWriterPopLocalThree(t *testing.T) {
 
 // This case has 12 processor commands. For Arg2 > 7 all other case
 func TestWriterPopLocalSeven(t *testing.T) {
-	testLine := Command{CmdType: cmdPop, Arg1: "local", Arg2: 7}
+	testLine := parser.Command{CmdType: parser.CmdPop, Arg1: "local", Arg2: 7}
 	want := []string{
 		"// pop local 7",
 		"@SP",
@@ -96,7 +100,7 @@ func TestWriterPopLocalSeven(t *testing.T) {
 }
 
 func TestWriterPopLocalMore(t *testing.T) {
-	testLine := Command{CmdType: cmdPop, Arg1: "local", Arg2: 8}
+	testLine := parser.Command{CmdType: parser.CmdPop, Arg1: "local", Arg2: 8}
 	want := []string{
 		"// pop local 8",
 		"@8",
@@ -118,7 +122,7 @@ func TestWriterPopLocalMore(t *testing.T) {
 }
 
 func TestWriterPopPointerZero(t *testing.T) {
-	testLine := Command{CmdType: cmdPop, Arg1: "pointer", Arg2: 0}
+	testLine := parser.Command{CmdType: parser.CmdPop, Arg1: "pointer", Arg2: 0}
 	want := []string{
 		"// pop pointer 0",
 		"@SP",
@@ -131,7 +135,7 @@ func TestWriterPopPointerZero(t *testing.T) {
 }
 
 func TestWriterPopPointerOne(t *testing.T) {
-	testLine := Command{CmdType: cmdPop, Arg1: "pointer", Arg2: 1}
+	testLine := parser.Command{CmdType: parser.CmdPop, Arg1: "pointer", Arg2: 1}
 	want := []string{
 		"// pop pointer 1",
 		"@SP",

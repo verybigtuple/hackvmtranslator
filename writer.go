@@ -160,11 +160,14 @@ func (cw *CodeWriter) writeAritmBinary(cmd Command) error {
 
 func (cw *CodeWriter) writeArithmUnary(cmd Command) error {
 	cw.asm.AddComment(cmd.Arg1)
+	// Get address for result (top of the stack)
+	cw.asm.AsmCmds(SP, "A=M-1")
+	// make calculation
 	switch cmd.Arg1 {
-	case "neg":
-		cw.asm.SetTopStack("-M")
-	case "not":
-		cw.asm.SetTopStack("!M")
+	case negKey:
+		cw.asm.AsmCmds("M=-M")
+	case notKey:
+		cw.asm.AsmCmds("M=!M")
 	}
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err

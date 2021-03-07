@@ -72,13 +72,6 @@ func (ah *asmBuilder) FromStack(dest string) {
 	ah.builder.WriteString("=M\n")
 }
 
-func (ah *asmBuilder) SetTopStack(calc string) {
-	ah.AsmCmds(SP, "A=M-1")
-	ah.builder.WriteString("M=")
-	ah.builder.WriteString(calc)
-	ah.builder.WriteRune('\n')
-}
-
 func (ah *asmBuilder) DecAddr() {
 	ah.builder.WriteString("A=A-1\n")
 }

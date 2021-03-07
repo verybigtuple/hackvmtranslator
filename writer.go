@@ -93,13 +93,24 @@ func (cw *CodeWriter) writePush(cmd Command) error {
 	case isPointerSegment(cmd.Arg1):
 		cw.asm.PointerAinstr(cmd.Arg2)
 		cw.asm.AsmCmds("D=M")
-	default: // push local 2
+	default: // push local, push argument or this/that
+		// If offset is <=3 some optimisation is possible
 		if cmd.Arg2 <= 3 {
-			cw.asm.SegmAddr(cmd.Arg1, cmd.Arg2)
+			cw.asm.SegmentAinstr(cmd.Arg1)
+			if cmd.Arg2 == 0 {
+				cw.asm.AsmCmds("A=M")
+			} else {
+				cw.asm.AsmCmds("A=M+1")
+			}
+			for i := 0; i < cmd.Arg2-1; i++ {
+				cw.asm.AsmCmds("A=A+1")
+			}
 		} else {
-			cw.asm.SegmAddrCalcWithD(cmd.Arg1, cmd.Arg2, "A")
+			cw.asm.AsmCmds(cmd.Arg2, "D=A")
+			cw.asm.SegmentAinstr(cmd.Arg1)
+			cw.asm.AsmCmds("A=D+M")
 		}
-		cw.asm.FromMemToD()
+		cw.asm.AsmCmds("D=M")
 	}
 
 	cw.asm.ToStack("D")
@@ -126,16 +137,24 @@ func (cw *CodeWriter) writePop(cmd Command) error {
 	default:
 		if cmd.Arg2 <= 7 {
 			cw.asm.FromStack("D")
-			cw.asm.SegmAddr(cmd.Arg1, cmd.Arg2)
+			cw.asm.SegmentAinstr(cmd.Arg1)
+			if cmd.Arg2 == 0 {
+				cw.asm.AsmCmds("A=M")
+			} else {
+				cw.asm.AsmCmds("A=M+1")
+			}
+			for i := 0; i < cmd.Arg2-1; i++ {
+				cw.asm.AsmCmds("A=A+1")
+			}
 		} else {
-			cw.asm.SegmAddrCalcWithD(cmd.Arg1, cmd.Arg2, "D")
-			cw.asm.ToR("D")
+			cw.asm.AsmCmds(cmd.Arg2, "D=A")
+			cw.asm.SegmentAinstr(cmd.Arg1)
+			cw.asm.AsmCmds("D=D+M", R13, "M=D")
 			cw.asm.FromStack("D")
-			cw.asm.FromR("A")
+			cw.asm.AsmCmds(R13, "A=M")
 		}
-		cw.asm.FromDtoMem()
+		cw.asm.AsmCmds("M=D")
 	}
-
 	_, err := cw.writer.WriteString(cw.asm.CodeAsm())
 	return err
 }

@@ -8,24 +8,26 @@ import (
 )
 
 type SegmInstr string
+type freeReg string
 
 const (
 	tempBaseAddr = 5 // Base address for temp vars
-	freeReg      = "@R13"
 
 	SP   SegmInstr = "SP"
 	LCL  SegmInstr = "LCL"
 	ARG  SegmInstr = "ARG"
 	THIS SegmInstr = "THIS"
 	THAT SegmInstr = "THAT"
+
+	R13 freeReg = "R13"
+	R14 freeReg = "R14"
 )
 
-// Assign segments to assembler A-Instructions
-var segmAInstr = map[string]string{
-	"local":    "@LCL",
-	"argument": "@ARG",
-	"this":     "@THIS",
-	"that":     "@THAT",
+var varSegments = map[string]SegmInstr{
+	localKey:    LCL,
+	argumentKey: ARG,
+	thisKey:     THIS,
+	thatKey:     THAT,
 }
 
 var pointerOffsets = map[int]SegmInstr{
@@ -84,6 +86,10 @@ func (ah *asmBuilder) AsmCmds(cmds ...interface{}) {
 			ah.builder.WriteRune('@')
 			ah.builder.WriteString(s)
 			ah.builder.WriteRune('\n')
+		case freeReg:
+			ah.builder.WriteRune('@')
+			ah.builder.WriteString(string(v))
+			ah.builder.WriteRune('\n')
 		case SegmInstr:
 			ah.builder.WriteRune('@')
 			ah.builder.WriteString(string(v))
@@ -112,27 +118,6 @@ func (ah *asmBuilder) CondJump(prefix, cond, jmp string, c int) {
 	ah.SetLabel(label)
 }
 
-// FromMemToD adds D=M instruction
-func (ah *asmBuilder) FromMemToD() {
-	ah.builder.WriteString("D=M\n")
-}
-
-// FromDtoMem adds M=D instruction
-func (ah *asmBuilder) FromDtoMem() {
-	ah.builder.WriteString("M=D\n")
-}
-
-// AddRregFromDReg - asm code for adding a value of the D-Register to R-register
-func (ah *asmBuilder) ToR(from string) {
-	ah.builder.WriteString(freeReg + "\n")
-	ah.builder.WriteString("M=" + from + "\n")
-}
-
-func (ah *asmBuilder) FromR(src string) {
-	ah.builder.WriteString(freeReg + "\n")
-	ah.builder.WriteString(src + "=M\n")
-}
-
 // ConstToD add asm code to add a integer value to the D-Register:
 // example
 // @101
@@ -140,30 +125,6 @@ func (ah *asmBuilder) FromR(src string) {
 func (ah *asmBuilder) ConstToD(c int) {
 	ah.builder.WriteString("@" + strconv.Itoa(c) + "\n")
 	ah.builder.WriteString("D=A\n")
-}
-
-// SegmAddrCalcWithD adds asm code for calc addr+offset
-// by using D register and get addr value to A or D register
-//  resReg is A or D (where the calculated addres should be stored)
-func (ah *asmBuilder) SegmAddrCalcWithD(segm string, offset int, resReg string) {
-	ah.builder.WriteString("@" + strconv.Itoa(offset) + "\n") // like @101
-	ah.builder.WriteString("D=A\n")
-	ah.builder.WriteString(segmAInstr[segm] + "\n") // like @ARG
-	ah.builder.WriteString(resReg + "=D+M\n")
-}
-
-// SegmAddr adds asm code that calcs addr+offset w/o using D register
-// the result is stored in A register. For big offsets may be ineffective.
-func (ah *asmBuilder) SegmAddr(segm string, offset int) {
-	ah.builder.WriteString(segmAInstr[segm] + "\n")
-	if offset == 0 {
-		ah.builder.WriteString("A=M\n")
-	} else {
-		ah.builder.WriteString("A=M+1\n")
-	}
-	for i := 0; i < offset-1; i++ {
-		ah.builder.WriteString("A=A+1\n")
-	}
 }
 
 // StaticAinstr adds a static A-instruction. Like @file.5
@@ -184,6 +145,10 @@ func (ah *asmBuilder) TempAInstr(offset int) {
 // StaticAinstr adds a pointerp A-instruction. @THIS or @THAT
 func (ah *asmBuilder) PointerAinstr(offset int) {
 	ah.AsmCmds(pointerOffsets[offset])
+}
+
+func (ah *asmBuilder) SegmentAinstr(vmSegment string) {
+	ah.AsmCmds(varSegments[vmSegment])
 }
 
 func (ah *asmBuilder) AtFuncLabel(fnPrefix, label string) {
